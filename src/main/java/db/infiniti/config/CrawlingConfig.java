@@ -25,7 +25,7 @@ import db.infiniti.surf.Browser;
 
 public class CrawlingConfig {
 	String currentCollectionName;
-	ArrayList<String> queries;
+	ArrayList<String> queries ;
 	LinkedHashMap<String, String> queryNumberofResults;
 	private String openDescFilePath = "";
 	private String openDescDirPath = "";

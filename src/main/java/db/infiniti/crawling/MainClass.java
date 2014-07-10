@@ -10,7 +10,17 @@ public class MainClass extends Thread {
 	static CrawlingConfig crawlingConfig;
 
 	public static void main(String[] args) {
+		String dataModelTable = "";
+		String dataOutputTable = "";
 
+		if(args.length>1){
+			dataModelTable = args[0];
+			dataOutputTable = args[1];
+		}else{
+			dataModelTable = "dsItemsModelXPATH";
+			dataOutputTable = "dsItemsOutputMohtry";
+		}
+		
 		ArrayList<String> listOfReturnedResults = new ArrayList<String>();
 
 		String queryPoolPath = "querypool/wikiwebsorted";
@@ -25,7 +35,7 @@ public class MainClass extends Thread {
 
 		crawlingConfig = new CrawlingConfig();
 		crawlingConfig.setScrShotBrowser();
-		crawlingConfig.setDetailedPageBrowsers(4);
+		crawlingConfig.setDetailedPageBrowsers(5);
 		
 	//	crawlingConfig.setWebTools(new WebTools());
 		// to extract pages and the content
@@ -37,9 +47,9 @@ public class MainClass extends Thread {
 		
 		crawlingConfig.setExtractDataFromDPageS(true);
 		crawlingConfig.setOutputDataBase("mydatafactory");
-		crawlingConfig.setTableName("dsItemsOutputMohtry");
+		crawlingConfig.setTableName(dataOutputTable);
 		// data output table name
-		crawlingConfig.setDataModelTable("dsItemsModelXPATH");//"simpledatamodel");//dsItemsModelXPATH");//dsItemsModelXPATH
+		crawlingConfig.setDataModelTable(dataModelTable);//"simpledatamodel");//dsItemsModelXPATH");//dsItemsModelXPATH
 		// data model table to extract detailed pages
 
 		@SuppressWarnings("unused")

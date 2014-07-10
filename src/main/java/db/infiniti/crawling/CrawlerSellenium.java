@@ -147,7 +147,7 @@ public class CrawlerSellenium {
 							.readLinesFromFile(crawlingConfig.pathToVisitedPagesPerQuery));
 			url = crawlingConfig
 					.readLastPageFromFile(crawlingConfig.pathToLastSearchResultPage);
-			crawlingConfig.setQueryIndexFromFile();
+		//	crawlingConfig.setQueryIndexFromFile();
 			lastDetailedPageBrowsed = crawlingConfig
 					.readLastPageFromFile(crawlingConfig.pathToLastLinkDoc);
 			// firstRunForWebsite = false;
