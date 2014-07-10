@@ -25,21 +25,21 @@ public class MainClass extends Thread {
 
 		crawlingConfig = new CrawlingConfig();
 		crawlingConfig.setScrShotBrowser();
-		crawlingConfig.setDetailedPageBrowsers(1);
+		crawlingConfig.setDetailedPageBrowsers(4);
 		
 	//	crawlingConfig.setWebTools(new WebTools());
 		// to extract pages and the content
 
-		crawlingConfig.setUnPauseCrawl(false);// restart crawl
+		crawlingConfig.setUnPauseCrawl(true);// restart crawl
 
 		crawlingConfig.setExtractTextFromAllVisitedPages(false);
 		crawlingConfig.setExtractTextFromSRPages(false);
 		
 		crawlingConfig.setExtractDataFromDPageS(true);
 		crawlingConfig.setOutputDataBase("mydatafactory");
-		crawlingConfig.setTableName("dsItemsOutput");
+		crawlingConfig.setTableName("dsItemsOutputMohtry");
 		// data output table name
-		crawlingConfig.setDataModelTable("dsItemsModelXPATH");//"simpledatamodel");//dsItemsModelXPATH");
+		crawlingConfig.setDataModelTable("dsItemsModelXPATH");//"simpledatamodel");//dsItemsModelXPATH");//dsItemsModelXPATH
 		// data model table to extract detailed pages
 
 		@SuppressWarnings("unused")

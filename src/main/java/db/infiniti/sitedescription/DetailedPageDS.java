@@ -17,6 +17,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.remote.ErrorHandler.UnknownServerException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -196,69 +197,96 @@ public class DetailedPageDS {
 		}
 		Statement s;
 		ResultSet rs = null;
-		Iterator itE = extractionResults.keySet().iterator();
-		HashMap<String, Vector<List<List<WebElement>>>> storeNestedData = new HashMap<String, Vector<List<List<WebElement>>>>();
-		if (itE.hasNext()) {
+		
+		synchronized(extractionResults){
+			Iterator itE = extractionResults.keySet().iterator();
+			HashMap<String, Vector<List<List<WebElement>>>> storeNestedData = new HashMap<String, Vector<List<List<WebElement>>>>();
+			if (itE.hasNext()) {
 
-			try {
-				String query = "INSERT INTO \"" + tableName + "\" (";
-				if (itE.hasNext()) {
-					query = query + itE.next();
-				}
-				while (itE.hasNext()) {
-					query = query + ", " + itE.next();
-				}
-				itE = extractionResults.keySet().iterator();
-				query = query + ")  VALUES (";
-				while (itE.hasNext()) {
-					String tempName = (String) itE.next();
-					Vector<List<List<String>>> tempObj = (Vector<List<List<String>>>) extractionResults
-							.get(tempName);
-					if (!tempObj.isEmpty()) {
-						String value = "";
-						boolean newRecord = true;
-						for (int i = 0; i < tempObj.size(); i++) {
-							List<List<String>> tempRes = tempObj.get(i);
-							if (tempRes.size() > 1) {
-								if (tempRes.get(0).size() == 1
-										&& tempRes.get(1).size() > 1) { // first
-																		// one
-																		// is a
-																		// label
-									String tempText;// = tempRes.get(0).get(0);
-									for (int j = 0; j < tempRes.size(); j++) {
-										for (int k = 0; k < tempRes.size(); k++) {
-											if (k < tempRes.size()) {
-												if (k == 0) {
-													tempText = tempRes.get(0)
-															.get(0);
-												} else {
-													tempText = tempRes.get(k)
-															.get(j);
-												}
-												if (newRecord) {
-													value = value + tempText;
-													newRecord = false;
-												} else {
-													value = value + "----"
-															+ tempText; // ","
-																		// sign
-																		// for
-																		// platform,3.5;platform,2.0;
+				try {
+					String query = "INSERT INTO \"" + tableName + "\" (";
+					if (itE.hasNext()) {
+						query = query + itE.next();
+					}
+					while (itE.hasNext()) {
+						query = query + ", " + itE.next();
+					}
+					itE = extractionResults.keySet().iterator();
+					query = query + ")  VALUES (";
+					while (itE.hasNext()) {
+						String tempName = (String) itE.next();
+						Vector<List<List<String>>> tempObj = (Vector<List<List<String>>>) extractionResults
+								.get(tempName);
+						if (!tempObj.isEmpty()) {
+							String value = "";
+							boolean newRecord = true;
+							for (int i = 0; i < tempObj.size(); i++) {
+								List<List<String>> tempRes = tempObj.get(i);
+								if (tempRes.size() > 1) {
+									if (tempRes.get(0).size() == 1
+											&& tempRes.get(1).size() > 1) { // first
+																			// one
+																			// is a
+																			// label
+										String tempText;// = tempRes.get(0).get(0);
+										for (int j = 0; j < tempRes.size(); j++) {
+											for (int k = 0; k < tempRes.size(); k++) {
+												if (j < tempRes.get(k).size() && 
+														k < tempRes.size()) {
+													if (k == 0) {
+														tempText = tempRes.get(0)
+																.get(0);
+													} else {
+														tempText = tempRes.get(k)
+																.get(j);
+													}
+													if (newRecord) {
+														value = value + tempText;
+														newRecord = false;
+													} else {
+														value = value + "----"
+																+ tempText; // ","
+																			// sign
+																			// for
+																			// platform,3.5;platform,2.0;
+													}
 												}
 											}
+											value = value + ";;;;"; // TODO
+											newRecord = true;
 										}
-										value = value + ";;;;"; // TODO
-										newRecord = true;
-									}
 
+									} else {
+										for (int j = 0; j < tempRes.get(0).size(); j++) {
+											for (int k = 0; k < tempRes.size(); k++) {
+												if (j < tempRes.get(k).size()
+														&& k < tempRes.size()) {
+													String tempText = tempRes
+															.get(k).get(j);
+													if (newRecord) {
+														value = value + tempText;
+														newRecord = false;
+													} else {
+														value = value + "----"
+																+ tempText; // ","
+																			// sign
+																			// for
+																			// platform,3.5;platform,2.0;
+													}
+												}
+											}
+											value = value + ";;;;"; // TODO
+											newRecord = true;
+										}
+
+									}
 								} else {
 									for (int j = 0; j < tempRes.get(0).size(); j++) {
 										for (int k = 0; k < tempRes.size(); k++) {
 											if (j < tempRes.get(k).size()
 													&& k < tempRes.size()) {
-												String tempText = tempRes
-														.get(k).get(j);
+												String tempText = tempRes.get(k)
+														.get(j);
 												if (newRecord) {
 													value = value + tempText;
 													newRecord = false;
@@ -274,69 +302,47 @@ public class DetailedPageDS {
 										value = value + ";;;;"; // TODO
 										newRecord = true;
 									}
-
-								}
-							} else {
-								for (int j = 0; j < tempRes.get(0).size(); j++) {
-									for (int k = 0; k < tempRes.size(); k++) {
-										if (j < tempRes.get(k).size()
-												&& k < tempRes.size()) {
-											String tempText = tempRes.get(k)
-													.get(j);
-											if (newRecord) {
-												value = value + tempText;
-												newRecord = false;
-											} else {
-												value = value + "----"
-														+ tempText; // ","
-																	// sign
-																	// for
-																	// platform,3.5;platform,2.0;
-											}
-										}
-									}
-									value = value + ";;;;"; // TODO
-									newRecord = true;
 								}
 							}
+							value = value.substring(0, value.lastIndexOf(";;;;"));
+							if (value.contains("'")) {
+								value = value.replaceAll("'", "\\\"");
+							}
+							query = query + "'" + value + "', ";
+						} else {
+							query = query + "'" + "empty" + "', ";
 						}
-						value = value.substring(0, value.lastIndexOf(";;;;"));
-						if (value.contains("'")) {
-							value = value.replaceAll("'", "\\\"");
-						}
-						query = query + "'" + value + "', ";
-					} else {
-						query = query + "'" + "empty" + "', ";
 					}
-				}
-				query = query.substring(0, query.lastIndexOf(","));
-				query = query + ")";
-				if (query.contains("\n")) {
-					query = query.replaceAll("\n", " ");
-				}
-				s = connection.createStatement();
-				s.execute(query);
+					query = query.substring(0, query.lastIndexOf(","));
+					query = query + ")";
+					if (query.contains("\n")) {
+						query = query.replaceAll("\n", " ");
+					}
+					s = connection.createStatement();
+					s.execute(query);
 
-				// TODO deal with nested values
-				/*
-				 * UPDATE "Websites" SET link_xp =
-				 * '//div[@id=\"jobresults\"]/div/ul/li/a' Where link_xp like
-				 * '?'
-				 */
-				// s.executeQuery("SELECT table_name FROM information_schema.tables  WHERE table_schema='deb52794_fedweb'");//SELECT
-				// * FROM INFORMATION_SCHEMA.TABLES WHERE table_schema =
-				// 'deb52794_fedweb'
-				// s.executeQuery("SELECT * FROM engine WHERE status LIKE 'OK'");
-				// s.execute();
-				// s.executeQuery("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'engine';");
-				s.close();
-				extractionResults.clear();
-			} catch (SQLException e) {
-				e.printStackTrace();
+					// TODO deal with nested values
+					/*
+					 * UPDATE "Websites" SET link_xp =
+					 * '//div[@id=\"jobresults\"]/div/ul/li/a' Where link_xp like
+					 * '?'
+					 */
+					// s.executeQuery("SELECT table_name FROM information_schema.tables  WHERE table_schema='deb52794_fedweb'");//SELECT
+					// * FROM INFORMATION_SCHEMA.TABLES WHERE table_schema =
+					// 'deb52794_fedweb'
+					// s.executeQuery("SELECT * FROM engine WHERE status LIKE 'OK'");
+					// s.execute();
+					// s.executeQuery("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'engine';");
+					s.close();
+					extractionResults.clear();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			} else {
+				System.out.println("No extracted data records from this website.");
 			}
-		} else {
-			System.out.println("No extracted data records from this website.");
 		}
+		
 	}
 
 	public void closeConnection() {
@@ -407,7 +413,9 @@ public class DetailedPageDS {
 							resultsOfXpathText.add(fileName);
 							if (!resultsOfXpathText.isEmpty()) {
 								// resultsOfXpath.addAll(tempListWebEl);
-								resultsOfXpath.addAll(resultsOfXpathText);
+								synchronized(resultsOfXpath){
+									resultsOfXpath.addAll(resultsOfXpathText);
+								}
 							}
 						}
 
@@ -416,8 +424,7 @@ public class DetailedPageDS {
 								.runXPathQuery((String) xPaths.get(i));
 						List<String> resultsOfXpathText = getTextOfWebElement(
 								(String) xPaths.get(i), tempListWebEl);
-						if (!resultsOfXpathText.isEmpty()) {
-							// resultsOfXpath.addAll(tempListWebEl);
+						synchronized(resultsOfXpath){
 							resultsOfXpath.addAll(resultsOfXpathText);
 						}
 					}
@@ -444,8 +451,7 @@ public class DetailedPageDS {
 												+ fileName);
 								List<String> resultsOfXpathText = new ArrayList<String>();
 								resultsOfXpathText.add(fileName);
-								if (!resultsOfXpathText.isEmpty()) {
-									// resultsOfXpath.addAll(tempListWebEl);
+								synchronized(resultsOfXpath){
 									resultsOfXpath.addAll(resultsOfXpathText);
 								}
 							}
@@ -467,13 +473,18 @@ public class DetailedPageDS {
 
 			}
 			List<List<String>> resTemp = new ArrayList<List<String>>();
-			if (!resultsOfXpath.isEmpty()) {
-				resTemp.add(resultsOfXpath);
-				resultS.add(resTemp);
+			synchronized(resultsOfXpath){
+				if (!resultsOfXpath.isEmpty()) {
+					resTemp.add(resultsOfXpath);
+					resultS.add(resTemp);
+				}
+				if (!resultS.isEmpty()) {
+					synchronized(extractionResults){
+						extractionResults.put(tempName, resultS);
+					}
+				}		
 			}
-			if (!resultS.isEmpty()) {
-				extractionResults.put(tempName, resultS);
-			}
+			
 		}
 		// return extractionResults;
 	}
@@ -500,15 +511,23 @@ public class DetailedPageDS {
 		 * xPath.substring(xPath.indexOf("[.")+2, xPath.indexOf("]")); }
 		 */
 		List<String> resultTextS = new ArrayList<String>();
-		for (WebElement webEl : webElList) {
-			// List<WebElement> webElRes =
-			// webEl.findElements(By.xpath("./"+tempXpath));
-			String text = "";
-			// if(!webElRes.isEmpty()){
-			// text = webElRes.get(0).getText();
-			text = webEl.getText();
-			resultTextS.add(text);
-			// }
+		if(webElList!=null){
+			for (WebElement webEl : webElList) {
+				// List<WebElement> webElRes =
+				// webEl.findElements(By.xpath("./"+tempXpath));
+				String text = "";
+				// if(!webElRes.isEmpty()){
+				// text = webElRes.get(0).getText();
+				try{
+					text = webEl.getText();
+				}catch(org.openqa.selenium.StaleElementReferenceException w){
+					
+				}catch(UnknownServerException we){
+					
+				}
+				resultTextS.add(text);
+				// }
+			}
 		}
 		return resultTextS;
 	}

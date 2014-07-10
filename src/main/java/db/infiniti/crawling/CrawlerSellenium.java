@@ -537,9 +537,11 @@ public class CrawlerSellenium {
 				// name
 				dataModelLoaded = true;
 			}
-			crawlingConfig.detailedPageDS.extractInfo(detailedPagesbrowser);
-			crawlingConfig.detailedPageDS.insertGameData(crawlingConfig
-					.getTableName());
+			synchronized(this){
+				crawlingConfig.detailedPageDS.extractInfo(detailedPagesbrowser);
+				crawlingConfig.detailedPageDS.insertGameData(crawlingConfig
+						.getTableName());
+			}
 		}
 
 	}
@@ -736,7 +738,14 @@ public class CrawlerSellenium {
 			title_xp = title_xp.replaceFirst("/", "");
 		}
 		WebElement links = null;
-		links = wE.findElement(By.xpath("./" + title_xp));
+		try{
+			links = wE.findElement(By.xpath("./" + title_xp));
+		}catch(org.openqa.selenium.StaleElementReferenceException e){
+			
+		}catch(UnknownServerException ew){
+			
+		}
+
 		if (links == null) {
 			System.out.println("Could not find the titleby the xpath: ");
 		} else {
@@ -811,10 +820,12 @@ public class CrawlerSellenium {
 			WebElement links = null;
 			try {
 				links = addressComponent.findElement(By.xpath("./" + desc_xp));
-			} catch (UnknownServerException e) {
-				System.out.print("UnknownServerException in XPATH querying "
-						+ desc_xp);
+			}catch(org.openqa.selenium.StaleElementReferenceException e){
+				
+			}catch(UnknownServerException ew){
+				
 			}
+
 
 			if (links == null) {
 				System.out
@@ -1067,7 +1078,13 @@ public class CrawlerSellenium {
 		if (linkXP.startsWith(".")) {
 			linkXP = linkXP.replaceFirst(".", "");
 		}
-		links = addressComponent.findElement(By.xpath("./" + linkXP));
+		try{
+			links = addressComponent.findElement(By.xpath("./" + linkXP));
+		}catch(org.openqa.selenium.StaleElementReferenceException e){
+			
+		}catch(UnknownServerException ew){
+			
+		}
 
 		if (links == null) {
 			System.out

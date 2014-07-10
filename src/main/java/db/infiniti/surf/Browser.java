@@ -184,7 +184,7 @@ public class Browser {
 
 
 	public void loadPage(String url) {
-		driverURL = "http://www.quotenet.nl/Miljonairs/Klaus-de-Clercq-Zubli";
+		driverURL = url;//;"http://www.quotenet.nl/Miljonairs/Klaus-de-Clercq-Zubli";
 		long time = System.currentTimeMillis();
 		totalStopTime = 0;
 		Thread t = new Thread(new Runnable() {
