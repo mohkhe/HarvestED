@@ -24,6 +24,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.ErrorHandler.UnknownServerException;
 import org.w3c.dom.Document;
@@ -147,7 +148,7 @@ public class CrawlerSellenium {
 							.readLinesFromFile(crawlingConfig.pathToVisitedPagesPerQuery));
 			url = crawlingConfig
 					.readLastPageFromFile(crawlingConfig.pathToLastSearchResultPage);
-		//	crawlingConfig.setQueryIndexFromFile();
+			// crawlingConfig.setQueryIndexFromFile();
 			lastDetailedPageBrowsed = crawlingConfig
 					.readLastPageFromFile(crawlingConfig.pathToLastLinkDoc);
 			// firstRunForWebsite = false;
@@ -187,7 +188,7 @@ public class CrawlerSellenium {
 		} catch (ParserConfigurationException e) {
 			e.printStackTrace();
 		}
-
+		int numberOfDocInReturnedResults = 0;
 		while (continueCrawl) {
 			noOfReturnedResultsPages++;
 			crawlingConfig.setCurrentSRPageURL(url);
@@ -195,11 +196,12 @@ public class CrawlerSellenium {
 
 			String pageSource = null;
 			if (crawlingConfig.isExtractTextFromSRPages()) {
-				pageSource = sRPagesbrowser.getPageSource(url);
-			} else if(!url.equalsIgnoreCase("javascript clicked.")){
-				//it is already set and clicked. no need to load
+				pageSource = sRPagesbrowser.loadAndGetPageSource(url);
+			} else if (!url.equalsIgnoreCase("javascript clicked.")) {
+				// it is already set and clicked. no need to load
+				// sRPagesbrowser.loadPage(url);
 				sRPagesbrowser.loadPage(url);
-				sRPagesbrowser.loadPage(url);
+				// two time loading just for vanas.eu
 			}
 			// sRPagesbrowser.loadPage(url);
 			searchResultlink = url;
@@ -212,8 +214,9 @@ public class CrawlerSellenium {
 			if (crawlingConfig.isExtractTextFromSRPages()) {
 				saveRetunredResultPage(pageSource, noOfReturnedResultsPages);
 			}
+			crawlingConfig.setSearchResultPageNumber(noOfReturnedResultsPages);
 
-			if (crawlingConfig.getQuerySelectionApproach() == crawlingConfig.crawledTextBased) {
+			if (crawlingConfig.getQuerySelectionApproach() == crawlingConfig.mostFreqFeedbackText) {
 				// the search result page content also included
 				crawlingConfig.updateQueryList(sRPagesbrowser.getPageText());
 			}
@@ -246,8 +249,12 @@ public class CrawlerSellenium {
 			for (CrawledLinkDS crawledLinkDS : listOfLinksDetailedPages) {
 				increaseReturnedResForQueryNumber();// totalreturnedResForQuery
 				String resultLink = crawledLinkDS.getLink();
+				crawledLinkDS
+						.setNumberOfDocInReturnedResults(numberOfDocInReturnedResults);
+				numberOfDocInReturnedResults++;
 				// "http://www.lexology.com/library/detail.aspx?g=45038f45-8d2a-4c5b-a4bd-fcb399a59db4";//
 				if (!listOfAllReturnedResults.contains(resultLink)) {
+					// && crawlingConfig.cache.existsAlreadyInCache(resultLink)
 					/*
 					 * crawlReport.incNoCrawlingQueries();
 					 * crawlingConfig.saveCrawlStatus(
@@ -272,59 +279,48 @@ public class CrawlerSellenium {
 									+ resultLink + " ...");
 							CrawledLinkDS crawledLinkDS = getTheRelatedDS(
 									listOfLinksDetailedPages, resultLink);
-							// crawledLink.setLink(resultLink);
 							crawledLinkDS.setSearchResultlink(searchResultlink);
-							// crawledLinkDS = new CrawledLinkDS();
-							// also adds if not visited before
-							// if
-							// (!listOfAllDownloadedReturnedResults.contains(resultLink))
-							// {
-							// if the link is visited before, no effect yet,
-							// nothing added.
-							// done in
-							// VisitedBefore()->listOfAllReturnedResults.add(resultLink);
 							detailedPagesbrowser = crawlingConfig
 									.getFreeBrowser();
-
-							if (crawlingConfig
-									.isExtractTextFromAllVisitedPages()) {
-								setTextHtmlOfLink(detailedPagesbrowser
-										.getPageSource(resultLink),
-										crawledLinkDS);// it
-								// loads the page also
-								crawledLinkDS
-										.setLinkTextContent(detailedPagesbrowser
-												.getPageText());
-							} else {
-								detailedPagesbrowser.loadPage(resultLink);
-								detailedPagesbrowser.loadPage(resultLink);
-							}
-
-							// addToXmlDocumentItem(crawledLinkDS, "text", doc);
-							/*
-							 * System.out.println("Extracted " +
-							 * listOfAllReturnedResults.size() + " link: " +
-							 * resultLink);
-							 */
-
-							// TODO for
-							if (crawlingConfig.getQuerySelectionApproach() == crawlingConfig.crawledTextBased) {
-								crawlingConfig.updateQueryList(crawledLinkDS
-										.getLinkTextContent());
-							}
-							/*
-							 * //
-							 * 
-							 * 
-							 * /* } else {
-							 * System.out.println("Already visited link: " +
-							 * resultLink); }// else part is resolved in
-							 */// extractLinksFromSearchResultsFragments
-								// function
 							if (crawlingConfig.extractDataFromDPageS == true) {
+								detailedPagesbrowser.loadPage(resultLink);
 								extractFromDetailedPages(
 										crawlingConfig.getOutputDataBase(),
 										detailedPagesbrowser);
+							} else if (!crawlingConfig.cache
+									.existsAlreadyInCache(resultLink)) {
+								detailedPagesbrowser.loadPage(resultLink);
+							}
+							if (crawlingConfig.feedbackBasedApproach == true) {
+								String pageContent = "";
+								String pageHTMLContent = "";
+								if (crawlingConfig.cache
+										.existsAlreadyInCache(resultLink)) {
+									pageContent = crawlingConfig.cache
+											.getPageTextContentFromCache(resultLink);
+									/*
+									 * pageHTMLContent = crawlingConfig.cache
+									 * .getPageHTMLContentFromCache(resultLink);
+									 */
+								} else {
+									pageHTMLContent = detailedPagesbrowser
+											.getPageSource(resultLink);
+									pageContent = detailedPagesbrowser.getText();
+									crawlingConfig.cache.saveInCache(
+											resultLink, pageContent,
+											pageHTMLContent);
+								}
+								setTextHtmlOfLink(pageHTMLContent,
+										crawledLinkDS);// it
+								crawledLinkDS.setLinkTextContent(pageContent);
+								crawlingConfig.updateQueryList(crawledLinkDS
+										.getLinkTextContent());
+								crawlingConfig.fbBasedQueryGenerator
+										.prepareQuerySelection(
+												crawledLinkDS
+														.getNumberOfDocInReturnedResults(),
+												crawledLinkDS
+														.getLinkTextContent());
 							}
 
 							if (!listOfReturnedResultsPerQuery
@@ -332,19 +328,16 @@ public class CrawlerSellenium {
 								listOfReturnedResultsPerQuery.add(resultLink);
 							} else {
 								crawlReport.incNoRepeatedLinks();
-								// for a query with
 							}
 							addToXmlDocumentItem(crawledLinkDS, doc);
 
-							saveExtractedInfoOfLink(crawledLinkDS,
-									totalreturnedRes, resultLink);
+							if (crawlingConfig.SaveDSextractedInfoInFile == true) {
+								saveExtractedInfoOfLink(crawledLinkDS,
+										totalreturnedRes, resultLink);
+							}
 
 							crawlingConfig.saveCrawlStatus(crawledLinkDS
 									.getLink());
-							crawlingConfig.saveCrawlStatus(crawlReport
-									.getNumRepeatedLinksInGeneral(),
-									crawlingConfig
-											.getPathToNumberOfRepetitions());
 							crawlingConfig.freeBrowser(detailedPagesbrowser);
 						}
 
@@ -362,45 +355,35 @@ public class CrawlerSellenium {
 
 					}, resultLink);
 					seperatedBrowser.start();
-
-				} else {
+				} else if (listOfAllReturnedResults.contains(resultLink)) {
 					repeatedLinks++;// for one query
 					crawlReport.incNumRepeatedLinksInGeneral();
-
 					crawledLinkDS.setRepeated("Yes");
 					// in total
-					// aElem.setAttribute("repeated", "yes");
-					// comment it is repeated link
 				}
 
 				// if ((listOfAllReturnedResults.size()) >= 4000) {//total
-				// number
 				// 4900 // stop condition
-				if ((totalreturnedResForQueryList.get(0)) >= 30000) {
+				if ((totalreturnedResForQueryList.get(0)) >= 99) {
 					// number of results for one query
-					/*
-					 * continueCrawl = false; stopCrawlConditionIsMet = true;
-					 */
-
+					// continueCrawl = false; stopCrawlConditionIsMet = true;
 					stopCrawlForQuery = true;
 					break;// check. if not work
 				}
-
 			}
 
 			crawlingConfig.waitTillAllBrowsersAreFree();
-
-			if (totalreturnedRes >= 30000) {// number of //
-											// (listOfAllReturnedResults.size())
-				// results for
-				// one query
+			if (posedQueiesIndex > 200) {
 				continueCrawl = false;
 				stopCrawlForQuery = true;
-				// break;// check. if not work
 			}
-
+			if (totalreturnedRes >= 40000) {
+				// number (listOfAllReturnedResults.size())
+				// results for one query
+				continueCrawl = false;
+				stopCrawlForQuery = true;// break;
+			}
 			firstRunForWebsite = false;
-
 			if (this.nextResultPagexPath == null) {
 				if (siteDes.getNextPageXP() != null) {
 					this.nextResultPagexPath = siteDes.getNextPageXP();
@@ -416,6 +399,7 @@ public class CrawlerSellenium {
 						crawlReport.getNumRepeatedLinks(), repeatedLinks,
 						totalreturnedResForQuery);
 				printQueriesResults("crawledData/"
+						+ crawlingConfig.getCollectionName() + "/"
 						+ (crawlingConfig.getQueryIndex() - 1) + "-results.xls");
 
 				crawlReport.setNumRepeatedLinks(0);
@@ -431,12 +415,13 @@ public class CrawlerSellenium {
 									// page for query
 					continueCrawl = false;
 				}
+				numberOfDocInReturnedResults = 0;
 			} else {
 				url = null;
 				// if no next link, then, next query
 				url = setURLNextResultPage();
-				if (url != null ) {
-					if(!url.equalsIgnoreCase("javascript clicked.")){
+				if (url != null) {
+					if (!url.equalsIgnoreCase("javascript clicked.")) {
 						url = getLinkedURL(sourceURL, url);
 						if (url != null) {
 							System.out.println("Next ResultPage");
@@ -452,6 +437,7 @@ public class CrawlerSellenium {
 							totalreturnedResForQuery);
 
 					printQueriesResults("crawledData/"
+							+ crawlingConfig.getCollectionName() + "/"
 							+ (crawlingConfig.getQueryIndex() - 1)
 							+ "-results.xls");
 
@@ -463,7 +449,7 @@ public class CrawlerSellenium {
 
 					if (this.nextResultPagexPath == null) {
 						// for the web sites without any next button
-						if (posedQueiesIndex > 30) {
+						if (posedQueiesIndex > 300) {
 							continueCrawl = false;
 						}
 					}
@@ -479,9 +465,11 @@ public class CrawlerSellenium {
 			}
 		}
 
+		crawlingConfig.printQueryStatistics();
 		crawlingConfig.saveCrawlStatusCollectionName();
 		saveCrawledResultInXML(doc);
-		printQueriesResults("crawledData/results.xls");
+		printQueriesResults("crawledData/" + crawlingConfig.getCollectionName()
+				+ "/results.xls");
 
 		// Output to console for testing
 		// StreamResult result = new StreamResult(System.out);
@@ -537,7 +525,7 @@ public class CrawlerSellenium {
 				// name
 				dataModelLoaded = true;
 			}
-			synchronized(this){
+			synchronized (this) {
 				crawlingConfig.detailedPageDS.extractInfo(detailedPagesbrowser);
 				crawlingConfig.detailedPageDS.insertGameData(crawlingConfig
 						.getTableName());
@@ -548,11 +536,11 @@ public class CrawlerSellenium {
 
 	private void addToXmlDocumentItem(CrawledLinkDS crawledLinkDS, Document doc) {
 		Node lastSRNode = rootElement.getLastChild();
-
 		Element resultElem = doc.createElement("Result");
-		lastSRNode.appendChild(resultElem);
-		// ressaveRetunredResultPageultElem.appendChild(resultElem);
-
+		if (lastSRNode != null) {
+			lastSRNode.appendChild(resultElem);
+			// ressaveRetunredResultPageultElem.appendChild(resultElem);
+		}
 		Element aElem = doc.createElement("a");
 		resultElem.appendChild(aElem);
 		aElem.setAttribute("href", crawledLinkDS.getLink());
@@ -680,10 +668,13 @@ public class CrawlerSellenium {
 		try {
 			transformer = transformerFactory.newTransformer();
 			DOMSource source = new DOMSource(doc);
-
-			StreamResult result = new StreamResult(new File("crawledData/"
+			File file = new File("crawledData/"
 					+ crawlingConfig.getCollectionName()
-					+ "/crawledresults.xml"));
+					+ "/crawledresults.xml");
+			if (!file.exists()) {
+				file.mkdir();
+			}
+			StreamResult result = new StreamResult(file);
 			transformer.transform(source, result);
 		} catch (TransformerConfigurationException e) {
 			e.printStackTrace();
@@ -727,7 +718,14 @@ public class CrawlerSellenium {
 		if (!title_xp.equals(".")) {
 
 		} else {
-			return wE.getText();
+			try {
+				result = wE.getText();
+			} catch (org.openqa.selenium.StaleElementReferenceException we) {
+
+			} catch (UnknownServerException we) {
+
+			}
+			return result;
 		}
 		if (title_xp.startsWith(".")) {
 			title_xp = title_xp.replaceFirst(".", "");
@@ -738,18 +736,24 @@ public class CrawlerSellenium {
 			title_xp = title_xp.replaceFirst("/", "");
 		}
 		WebElement links = null;
-		try{
+		try {
 			links = wE.findElement(By.xpath("./" + title_xp));
-		}catch(org.openqa.selenium.StaleElementReferenceException e){
-			
-		}catch(UnknownServerException ew){
-			
+		} catch (org.openqa.selenium.StaleElementReferenceException e) {
+
+		} catch (UnknownServerException ew) {
+
 		}
 
 		if (links == null) {
 			System.out.println("Could not find the titleby the xpath: ");
 		} else {
-			result = links.getText();
+			try {
+				result = links.getText();
+			} catch (org.openqa.selenium.StaleElementReferenceException we) {
+
+			} catch (UnknownServerException we) {
+
+			}
 		}
 		return result;
 	}
@@ -799,8 +803,16 @@ public class CrawlerSellenium {
 		// numOfTries is zero for the first time, if cannot find xpath in
 		// first try, increased
 		if (descXPath.equals(".")) {// remove the title from whole text and
-									// return the remaining as description
-			result = addressComponent.getText();
+
+			// return the remaining as description
+			try {
+				result = addressComponent.getText();
+			} catch (org.openqa.selenium.StaleElementReferenceException we) {
+
+			} catch (UnknownServerException we) {
+
+			}
+
 			if (result.contains(crawledLinkDS.getTitle())) {
 				result.replace(crawledLinkDS.getTitle(), "");
 			}
@@ -820,19 +832,24 @@ public class CrawlerSellenium {
 			WebElement links = null;
 			try {
 				links = addressComponent.findElement(By.xpath("./" + desc_xp));
-			}catch(org.openqa.selenium.StaleElementReferenceException e){
-				
-			}catch(UnknownServerException ew){
-				
-			}
+			} catch (org.openqa.selenium.StaleElementReferenceException e) {
 
+			} catch (UnknownServerException ew) {
+
+			}
 
 			if (links == null) {
 				System.out
 						.println("Could not find the description by the xpath: ");
 			} else {
 				// result = links.get(0).getNodeValue();
-				result = links.getText();
+				try {
+					result = links.getText();
+				} catch (org.openqa.selenium.StaleElementReferenceException we) {
+
+				} catch (UnknownServerException we) {
+
+				}
 			}
 		}
 		return result;
@@ -907,7 +924,25 @@ public class CrawlerSellenium {
 					url = ((WebElement) tempO).getAttribute("href");
 				}
 				if (url.contains("javascript:")) {
-					tempO.click();
+					/*
+					 * String onClick = ((WebElement)
+					 * tempO).getAttribute("href")
+					 * ;//tempO.getAttribute("onclick"); onClick =
+					 * onClick.replace("Page$2", "Page$200"); //
+					 * url.replace(url.substring(url.indexOf("javascript:"),
+					 * url.length()), "");
+					 * 
+					 * ((JavascriptExecutor)
+					 * sRPagesbrowser.driver).executeScript("" + "<a href=" +
+					 * onClick + "style=\"color:Black;\">3</a>.click();" );
+					 */
+					try {
+						tempO.click();
+					} catch (org.openqa.selenium.StaleElementReferenceException we) {
+
+					} catch (UnknownServerException we) {
+
+					}
 					url = "javascript clicked.";
 				}
 				/*
@@ -1078,12 +1113,12 @@ public class CrawlerSellenium {
 		if (linkXP.startsWith(".")) {
 			linkXP = linkXP.replaceFirst(".", "");
 		}
-		try{
+		try {
 			links = addressComponent.findElement(By.xpath("./" + linkXP));
-		}catch(org.openqa.selenium.StaleElementReferenceException e){
-			
-		}catch(UnknownServerException ew){
-			
+		} catch (org.openqa.selenium.StaleElementReferenceException e) {
+
+		} catch (UnknownServerException ew) {
+
 		}
 
 		if (links == null) {
@@ -1102,7 +1137,13 @@ public class CrawlerSellenium {
 			} else {
 				// String name = links.get(0).getName();
 				// String value = links.getText();
-				result = links.getAttribute("href");
+				try {
+					result = links.getAttribute("href");
+				} catch (org.openqa.selenium.StaleElementReferenceException e) {
+
+				} catch (UnknownServerException er) {
+
+				}
 			}
 		}
 		return result;

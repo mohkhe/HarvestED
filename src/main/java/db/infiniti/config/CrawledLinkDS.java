@@ -20,7 +20,16 @@ public class CrawledLinkDS {
 	String linkTextContent = "Could not find.";
 	String linkHtmlContent = "Could not find.";
 	String repeated;
+	int numberOfDocInReturnedResults; 
 	
+	public int getNumberOfDocInReturnedResults() {
+		return numberOfDocInReturnedResults;
+	}
+
+	public void setNumberOfDocInReturnedResults(int numberOfDocInReturnedResults) {
+		this.numberOfDocInReturnedResults = numberOfDocInReturnedResults;
+	}
+
 	public Document getDoc() {
 		return doc;
 	}

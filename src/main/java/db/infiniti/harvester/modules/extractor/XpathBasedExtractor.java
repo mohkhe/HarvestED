@@ -79,7 +79,7 @@ public class XpathBasedExtractor extends Extractor implements ExtractorInterface
 		HashMap<String, List<String>> crawledDataModel;
 		crawledDataModel = dataModel.getCrawledDataModel();
 		toCrawlDataModel = dataModel.getToCrawlDataModel();
-		pageSource = sRPagesbrowser.getPageSource(url);
+		pageSource = sRPagesbrowser.loadAndGetPageSource(url);
 		Document doc = this.getDOmDocumentObjFromString(pageSource);
 		this.DOCUMENT_NODE = doc.getNodeType();
 				

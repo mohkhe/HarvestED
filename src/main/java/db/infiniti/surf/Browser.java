@@ -3,6 +3,7 @@ package db.infiniti.surf;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -24,23 +25,29 @@ import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.remote.UnreachableBrowserException;
 
+import db.infiniti.harvester.modules.common.TextFromHtml;
+
 public class Browser {
 
 	// FirefoxBrowser driver = new FirefoxBrowser();
 	// FirefoxDriver driver = new FirefoxDriver(new FirefoxBinary(), profile,
 	// new TimeSpan(0, 0, 0, timeoutSeconds));
-	FirefoxDriver driver;
+	public FirefoxDriver driver;
 	String sourceText = "";
 	String driverURL = "";
 	List<WebElement> qResS = null;
 	int timeOutThread = 4000; // milisecond
 	int timeOutPageScript = 3; // seconds
+	String collectionName = "";
+	String savePoPUPPath = "";
 
 	public long loadTime = 0;
 	public long getSourceTime = 0;
 	public long getTextTime = 0;
 	public long totalStopTime = 0;
 	public long totalDriverTime = 0;
+
+	String pageText = "";
 
 	public void setDriver() {
 		org.openqa.selenium.firefox.FirefoxProfile profile = new FirefoxProfile();
@@ -49,14 +56,18 @@ public class Browser {
 		profile.setPreference("webdriver.load.strategy", "fast");
 		profile.setPreference("network.http.connection-timeout", 2);
 		profile.setPreference("network.http.connection-retry-timeout", 1);
-	//gives error-illegalArgument	profile.setPreference("dom.disable_open_during_load", true);
+		// gives error-illegalArgument
+		// profile.setPreference("dom.disable_open_during_load", true);
 
 		profile.setPreference("browser.download.folderList", 2);
 		profile.setPreference("browser.download.manager.showWhenStarting",
 				false);
-		profile.setPreference(
-				"browser.download.dir",
-				"/media/DATA/dropbox/Dropbox/ubuntu workspace/maven.1374667260682/CrawlingTestProj/crawledData/popupsaved");
+		profile.setPreference("browser.download.dir", savePoPUPPath);
+
+		File file = new File(savePoPUPPath);
+		if (!file.exists()) {
+			file.mkdir();
+		}
 
 		profile.setPreference(
 				"browser.helperApps.neverAsk.saveToDisk",
@@ -100,6 +111,22 @@ public class Browser {
 		 * driver.manage().timeouts().setScriptTimeout(4, TimeUnit.SECONDS);
 		 * driver.manage().timeouts().pageLoadTimeout(4, TimeUnit.SECONDS);
 		 */
+	}
+
+	public String getCollectionName() {
+		return collectionName;
+	}
+
+	public void setCollectionName(String collectionName) {
+		this.collectionName = collectionName;
+	}
+
+	public String getSavePoPUPPath() {
+		return savePoPUPPath;
+	}
+
+	public void setSavePoPUPPath(String savePoPUPPath) {
+		this.savePoPUPPath = savePoPUPPath;
 	}
 
 	public void pressSaveKey() {
@@ -157,9 +184,10 @@ public class Browser {
 		}
 
 	}
+
 	public void DownloadImage(WebElement Image, String loc) {
-		//TODO 
-		
+		// TODO
+
 		// WebElement Image= driver.findElement(by);
 		File screen = ((TakesScreenshot) driver)
 				.getScreenshotAs(OutputType.FILE);
@@ -179,12 +207,10 @@ public class Browser {
 			e.printStackTrace();
 		}
 
-	
 	}
 
-
 	public void loadPage(String url) {
-		driverURL = url;//;"http://www.quotenet.nl/Miljonairs/Klaus-de-Clercq-Zubli";
+		driverURL = url;// ;"http://www.quotenet.nl/Miljonairs/Klaus-de-Clercq-Zubli";
 		long time = System.currentTimeMillis();
 		totalStopTime = 0;
 		Thread t = new Thread(new Runnable() {
@@ -195,7 +221,7 @@ public class Browser {
 				} catch (UnreachableBrowserException e) {
 					System.out.println("UnreachableBrowserException " + url);
 					setDriver();
-					getPageSource(url);
+					loadAndGetPageSource(url);
 				} catch (TimeoutException tmoutEx) {
 					// TODO check if it is stopped or we need to use
 					// window.stop();
@@ -241,11 +267,11 @@ public class Browser {
 
 	}
 
-	public String getPageSource(String url) {
+	public String loadAndGetPageSource(String url) {
 		// driver.navigate().to(url);
 		// String sourceText = "";
-		driverURL = url;//"http://www.quotenet.nl/Miljonairs/Klaus-de-Clercq-Zubli";
-		//url = "http://www.quotenet.nl/Miljonairs/Klaus-de-Clercq-Zubli"
+		driverURL = url;// "http://www.quotenet.nl/Miljonairs/Klaus-de-Clercq-Zubli";
+		// url = "http://www.quotenet.nl/Miljonairs/Klaus-de-Clercq-Zubli"
 		long time = System.currentTimeMillis();
 		totalStopTime = 0;
 		Thread t = new Thread(new Runnable() {
@@ -253,11 +279,11 @@ public class Browser {
 				String url = Thread.currentThread().getName();
 				try {
 					driver.get(url);
-				//	
+					//
 				} catch (UnreachableBrowserException e) {
 					System.out.println("UnreachableBrowserException " + url);
 					setDriver();
-					getPageSource(url);
+					loadAndGetPageSource(url);
 				} catch (TimeoutException tmoutEx) {
 					// TODO check if it is stopped or we need to use
 					// window.stop();
@@ -283,12 +309,16 @@ public class Browser {
 			try {
 				if (driver instanceof JavascriptExecutor) {
 
-					/*WebDriverBackedSelenium backedSelenuium = 
-				            new WebDriverBackedSelenium(driver,"about:blank");    
-*/
-/*					((JavascriptExecutor) driver)
-							.executeScript("return window.stop();");*/
-					driver.findElement(By.tagName("body")).sendKeys("Keys.ESCAPE");
+					/*
+					 * WebDriverBackedSelenium backedSelenuium = new
+					 * WebDriverBackedSelenium(driver,"about:blank");
+					 */
+					/*
+					 * ((JavascriptExecutor) driver)
+					 * .executeScript("return window.stop();");
+					 */
+					driver.findElement(By.tagName("body")).sendKeys(
+							"Keys.ESCAPE");
 					System.out.println("page load is stopped. " + url);
 				}
 			} catch (UnreachableBrowserException e) {
@@ -297,10 +327,9 @@ public class Browser {
 								+ url);
 				setDriver();
 			} catch (UnhandledAlertException uae) {
-		        Alert alert = driver.switchTo().alert();
-		        alert.accept();
-		    }
-			catch (Exception see) {
+				Alert alert = driver.switchTo().alert();
+				alert.accept();
+			} catch (Exception see) {
 				System.out.println("in stop() + loadingPage " + url + ", "
 						+ see.getStackTrace());
 			}
@@ -314,7 +343,7 @@ public class Browser {
 				String url = Thread.currentThread().getName();
 				try {
 					sourceText = driver.getPageSource();
-				//	 sourceText = getPageSourceNew(url);
+					// sourceText = getPageSourceNew(url);
 
 				} catch (TimeoutException tmoutEx) {
 					System.out.println("timeout + getPageSource " + url);
@@ -410,6 +439,7 @@ public class Browser {
 		 */
 
 	}
+
 	public String getPageSourceNew(String url) {
 		// TODO Auto-generated method stub
 		driver.get("view-source:" + url);
@@ -417,6 +447,7 @@ public class Browser {
 		driver.get(url);
 		return sourceText;
 	}
+
 	/*
 	 * public void downloadImage() { String s =
 	 * driver.findElement(By.cssSelector("#navbtm img")) .getAttribute("src");
@@ -436,25 +467,230 @@ public class Browser {
 		}
 	}
 
+	public String getPageSource(String url) {
+		// driver.navigate().to(url);
+		// String sourceText = "";
+		driverURL = url;// "http://www.quotenet.nl/Miljonairs/Klaus-de-Clercq-Zubli";
+		// url = "http://www.quotenet.nl/Miljonairs/Klaus-de-Clercq-Zubli"
+		long time = System.currentTimeMillis();
+		totalStopTime = 0;
+
+		time = System.currentTimeMillis();
+		Thread t = new Thread(new Runnable() {
+			public void run() {
+				String url = Thread.currentThread().getName();
+				try {
+					sourceText = driver.getPageSource();
+					// sourceText = getPageSourceNew(url);
+
+				} catch (TimeoutException tmoutEx) {
+					System.out.println("timeout + getPageSource " + url);
+				} catch (UnreachableBrowserException e) {
+					System.out.println("UnreachableBrowserException in getPageSource() "
+							+ url);
+					setDriver();
+					try {
+						sourceText = driver.getPageSource();
+						// sourceText = getPageSourceNew(url);
+						// view-source:
+						// sourceText = this.getPageSourceNew(url);
+					} catch (TimeoutException tmoutEx) {
+						System.out.println("time out + getPageSource + new setDriver "
+								+ url);
+						// ((JavascriptExecutor)
+						// driver).executeScript("return window.stop();");
+					} catch (Exception ee) {
+						System.out.println("getPageSource(), second try " + url
+								+ " " + ee.toString());
+					}
+				} catch (Exception e) {
+					System.out.println("driver.getPageSource()  " + url + " "
+							+ e.toString());
+				}
+			}
+
+		}, url);
+		t.start();
+
+		try {
+			t.join(2 * timeOutThread);
+		} catch (InterruptedException e) { // ignore
+		}
+		this.getSourceTime = System.currentTimeMillis() - time;
+		totalDriverTime = totalDriverTime + getSourceTime;
+
+		if (t.isAlive()) { // Thread still alive, we need to abort
+			long time2 = System.currentTimeMillis();
+			try {
+				if (driver instanceof JavascriptExecutor) {
+					((JavascriptExecutor) driver)
+							.executeScript("return window.stop();");
+					// driver.findElement(By.tagName("body")).sendKeys("Keys.ESCAPE");
+					System.out
+							.println("getpageSource - page load is stopped in getPageSource. "
+									+ url);
+				}
+			} catch (UnreachableBrowserException e) {
+				System.out
+						.println("UnreachableBrowserException + executeScript - getpageSource "
+								+ url);
+				setDriver();
+			} catch (TimeoutException tmoutEx) {
+				System.out
+						.println("TimeoutException in stop() - getpageSource "
+								+ url);
+			} catch (WebDriverException wE) {
+				System.out
+						.println("WebDriverException in getpageSource stop() in getPageSource. "
+								+ url + wE.toString());
+			} catch (Exception see) {
+				System.out.println("Exception getpageSource stop(). " + url
+						+ see.toString());
+			}
+			totalStopTime = totalStopTime + System.currentTimeMillis() - time2;
+		}
+		return sourceText;
+	}
+
+	public String getText(){
+		String pageText = new TextFromHtml().extractTextFromHtml(sourceText);
+		return pageText;
+	}
+	public String getPageTextThread() {
+		// driver.navigate().to(url);
+		// String sourceText = "";
+		String text = "";
+		String url = this.driverURL;// driver.getCurrentUrl();
+		long time = System.currentTimeMillis();
+
+		Thread t = new Thread(new Runnable() {
+			public void run() {
+				String url = Thread.currentThread().getName();
+				try {
+					qResS = runXPathQuery("//html/body/*");//
+					if (qResS != null && !qResS.isEmpty()) {
+						try {
+							pageText = "";
+							Iterator<WebElement> iter = qResS.iterator();
+							while (iter.hasNext()) {
+								pageText = pageText + iter.next().getText();
+							}
+							qResS.clear();
+						} catch (Exception e) {
+							System.out.println("Error in qResS.get(0).getText().toLowerCase(). "
+									+ url);
+							pageText = "error";
+						}
+					} else {
+						System.out.println("No results in runXPathQuery for getting text. "
+								+ url);
+						pageText = "error";
+					}
+				} catch (TimeoutException tmoutEx) {
+					System.out.println("timeout + getPageText " + url);
+				} catch (UnreachableBrowserException e) {
+					System.out.println("UnreachableBrowserException in getPageSource() "
+							+ url);
+					setDriver();
+				} catch (Exception e) {
+					System.out.println("driver.getPageText()  " + url + " "
+							+ e.toString());
+				}
+			}
+
+		}, url);
+		t.start();
+
+		try {
+			t.join(timeOutThread);
+		} catch (InterruptedException e) { // ignore
+		}
+		this.getTextTime = System.currentTimeMillis() - time;
+		totalDriverTime = totalDriverTime + getTextTime;
+
+		if (t.isAlive()) { // Thread still alive, we need to abort
+			long time2 = System.currentTimeMillis();
+			try {
+				if (driver instanceof JavascriptExecutor) {
+					((JavascriptExecutor) driver)
+							.executeScript("return window.stop();");
+					// driver.findElement(By.tagName("body")).sendKeys("Keys.ESCAPE");
+					System.out
+							.println("getpageSource - page load is stopped in getpageText. "
+									+ url);
+				}
+			} catch (UnreachableBrowserException e) {
+				System.out
+						.println("UnreachableBrowserException + executeScript - getpageText "
+								+ url);
+				setDriver();
+			} catch (TimeoutException tmoutEx) {
+				System.out.println("TimeoutException in stop() - getpageText "
+						+ url);
+			} catch (WebDriverException wE) {
+				System.out
+						.println("WebDriverException in getpageText stop() in getPageSource. "
+								+ url + wE.toString());
+			} catch (Exception see) {
+				System.out.println("Exception getpageText stop(). " + url
+						+ see.toString());
+			}
+			totalStopTime = totalStopTime + System.currentTimeMillis() - time2;
+
+		}
+		return text = pageText;
+	}
+
 	public String getPageText() {
 
 		long time = System.currentTimeMillis();
-		String text = "";
-		qResS = runXPathQuery("//body");// [contains(.,'content')]
-		if (qResS != null && !qResS.isEmpty()) {
-			try {
-				text = qResS.get(0).getText().toLowerCase();
-				qResS.clear();
-			} catch (Exception e) {
+		String text = "error";
+		/*
+		 * qResS = runXPathQuery("//body");// [contains(.,'content')] if (qResS
+		 * != null && !qResS.isEmpty()) { try { text =
+		 * qResS.get(0).getText().toLowerCase(); qResS.clear(); } catch
+		 * (Exception e) { System.out
+		 * .println("Error in qResS.get(0).getText().toLowerCase(). " +
+		 * this.driverURL); text = "error"; } } else {
+		 * System.out.println("No results in runXPathQuery for getting text. " +
+		 * this.driverURL); text = "error"; }
+		 */
+
+		if (text.equals("error") || text.equals("")) {
+			qResS = runXPathQuery("//html/body/*");//
+			if (qResS != null && !qResS.isEmpty()) {
+				try {
+					text = "";
+					Iterator<WebElement> iter = qResS.iterator();
+					while (iter.hasNext()) {
+						text = text + iter.next().getText();
+					}
+					qResS.clear();
+				} catch (Exception e) {
+					System.out
+							.println("Error in qResS.get(0).getText().toLowerCase(). "
+									+ this.driverURL);
+					text = "error";
+				}
+			} else {
 				System.out
-						.println("Error in qResS.get(0).getText().toLowerCase(). "
+						.println("No results in runXPathQuery for getting text. "
 								+ this.driverURL);
-				text = "Error in getting the text.";
+				text = "error";
 			}
-		} else {
-			System.out.println("No results in runXPathQuery for getting text. "
-					+ this.driverURL);
 		}
+		/*
+		 * if(text.equals("error") || text.equals("")){ qResS =
+		 * runXPathQuery("//*[contains(.,'content')]");// if (qResS != null &&
+		 * !qResS.isEmpty()) { try { Iterator<WebElement> iter =
+		 * qResS.iterator(); while(iter.hasNext()){ text = text +
+		 * iter.next().getText(); } qResS.clear(); } catch (Exception e) {
+		 * System.out .println("Error in qResS.get(0).getText().toLowerCase(). "
+		 * + this.driverURL); text = "error"; } } else {
+		 * System.out.println("No results in runXPathQuery for getting text. " +
+		 * this.driverURL); text = "error"; } }
+		 */
+
 		this.getTextTime = System.currentTimeMillis() - time;
 		totalDriverTime = totalDriverTime + getTextTime;
 		System.out.println("Loading time: " + this.loadTime + " miliseconds.");
@@ -482,17 +718,17 @@ public class Browser {
 							.getName()));
 				} catch (UnreachableBrowserException e) {
 					System.out.println("qResS = driver.findElements + UnreachableBrowserException"
-							+ driver.getCurrentUrl());
+							+ driverURL);
 					setDriver();
 					try {
 						driver.get(driverURL);
 					} catch (Exception ee) {
 						System.out.println("qResS = driver.findElements "
-								+ driver.getCurrentUrl() + ee.toString());
+								+ driverURL + ee.toString());
 					}
 				} catch (Exception e) {
 					System.out.println("qResS = driver.findElements "
-							+ driver.getCurrentUrl() + e.toString());
+							+ driverURL + e.toString());
 				}
 			}
 		}, xpathExpression);

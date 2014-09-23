@@ -5,7 +5,6 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -16,6 +15,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
+import db.infiniti.harvester.modules.common.Cache;
+import db.infiniti.harvester.modules.querygenerator.FeedbackBasedQueryGenerator;
 import db.infiniti.sitedescription.DetailedPageDS;
 import db.infiniti.sitedescription.WebsiteDS;
 import db.infiniti.sitedescription.WebsiteDescReader;
@@ -25,7 +26,7 @@ import db.infiniti.surf.Browser;
 
 public class CrawlingConfig {
 	String currentCollectionName;
-	ArrayList<String> queries ;
+	ArrayList<String> queries;
 	LinkedHashMap<String, String> queryNumberofResults;
 	private String openDescFilePath = "";
 	private String openDescDirPath = "";
@@ -44,25 +45,33 @@ public class CrawlingConfig {
 	Browser scrShots;
 	HashMap<Browser, Boolean> detailedPagesBrowsers = new HashMap<Browser, Boolean>();
 	HashMap<String, Integer> querySet = new HashMap<String, Integer>();
+	HashMap<String, Integer> termFreqInClueWeb = new HashMap<String, Integer>();
+	
 	List<String> sentQueries = new ArrayList<String>();
-	
+
 	boolean extractTextFromSRPages;
-	boolean extractTextFromAllVisitedPages; 
-	
+	boolean extractTextFromAllVisitedPages;
+	public boolean SaveDSextractedInfoInFile;
+
 	boolean firstQuery = true;
 	public String query;
-	public List<String> initialQuery = Arrays.asList(
-			  "vitol", 
-			  "company" 
+	public List<String> initialQuery = Arrays.asList("vitol"
+	// , "company"
 			);
 	String initialQueryProcesses = "";
 
 	int querySelectionApproach;
-	public int crawledTextBased = 1;
-	public int mostFrequentWebWords = 2;
-	public int browsing = 3;
+	public int PredefinedlistOfWords = 1;
+	public int browsing = 2;
+	public int mostFreqFeedbackText = 3;
+	public int leastFromLast = 4;
+	public int leastFreqFeedbackText = 5;
+	public int combinedLFL_PLW = 6;
+	public boolean feedbackBasedApproach = false;
 
+	public FeedbackBasedQueryGenerator fbBasedQueryGenerator;
 	public boolean extractDataFromDPageS = true;
+	public int searchResultPageNumber;
 
 	public DetailedPageDS detailedPageDS = new DetailedPageDS();
 	public String tableName;
@@ -85,7 +94,31 @@ public class CrawlingConfig {
 	public boolean unPauseCrawl = true;
 	public String crawlStatusPath;
 
-	
+	public Cache cache;
+
+	public void Cache() {
+
+	}
+
+	public Cache getCache() {
+		return cache;
+	}
+
+	public void setCache(String cachePath) {
+		this.cache = new Cache();
+		cache.setCacheMapFilePath(cachePath);
+		cache.prepareCacheReadWrite();
+		cache.readCacheMap();
+	}
+
+	public int getSearchResultPageNumber() {
+		return searchResultPageNumber;
+	}
+
+	public void setSearchResultPageNumber(int searchResultPageNumber) {
+		this.searchResultPageNumber = searchResultPageNumber;
+	}
+
 	public String getOutputDataBase() {
 		return outputDataBase;
 	}
@@ -110,7 +143,7 @@ public class CrawlingConfig {
 			boolean extractTextFromAllVisitedPages) {
 		this.extractTextFromAllVisitedPages = extractTextFromAllVisitedPages;
 	}
-	
+
 	public String getPathToAllDOwnloadedPages() {
 		return pathToAllDOwnloadedPages;
 	}
@@ -298,18 +331,27 @@ public class CrawlingConfig {
 	}
 
 	public void setQueries(String queriesFilePath) {
-		if (this.getQuerySelectionApproach() == this.mostFrequentWebWords) {
+		if (this.getQuerySelectionApproach() == this.PredefinedlistOfWords) {
 			this.queriesPath = queriesFilePath;
 			queries = new ArrayList<String>();
-			queries.add("vitol");
-			queries.add("vitol+oil");
-			queries.add("vitol+trading");
-			queries.add("vitol+foundation");
-			queries.add("vitol+group");
+			/*
+			 * queries.add("vitol"); queries.add("vitol+oil");
+			 * queries.add("vitol+trading"); queries.add("vitol+foundation");
+			 * queries.add("vitol+group");
+			 */
+			//TODO for now to put everything in cache
+			fbBasedQueryGenerator = new FeedbackBasedQueryGenerator();
+			queries = readQueriesFromFile(queries, queriesPath);
 			// //hazf-> queries = readQueriesFromFile(queries, queriesFilePath);
-		} else if (this.getQuerySelectionApproach() == this.crawledTextBased) {
-			// do nothing
+		} else if (this.feedbackBasedApproach) {
+			if (fbBasedQueryGenerator == null) {
+				fbBasedQueryGenerator = new FeedbackBasedQueryGenerator();
+			}
 		}
+		/*
+		 * else if (this.getQuerySelectionApproach() == this.crawledTextBased) {
+		 * } // do nothing }
+		 */
 	}
 
 	// [the, of, on, and, in, content, to, as, have, not, is, will, home, from,
@@ -320,9 +362,11 @@ public class CrawlingConfig {
 			File file = new File(filePath);
 			FileReader fstream = new FileReader(file);
 			BufferedReader in = new BufferedReader(fstream);
-			for (int i = 0; i < 100; i++) {
-				String line = in.readLine();
-				String query = line.replaceAll("[0-9]*", "").trim();
+			String line;
+			while ((line = in.readLine()) != null) {
+				// String line = in.readLine();
+				String query = line.split("\t")[0];
+				// String query = line.replaceAll("[0-9]*", "").trim();
 				if (!queries.contains(query)) {
 					queries.add(query);
 				}
@@ -359,9 +403,11 @@ public class CrawlingConfig {
 		String[] tokens = tokenizer(pageContent);
 
 		for (String token : tokens) {
-			if (!token.equalsIgnoreCase("") && !this.isStopWord(token) && !initialQuery.contains(token)
-					&& !sentQueries.contains(token)) {//it is not used before
-				//!initialQuery.contains(token) to avoid having "vitol+company+vitol"
+			if (!token.equalsIgnoreCase("") && !this.isStopWord(token)
+					&& !initialQuery.contains(token)
+					&& !sentQueries.contains(token)) {// it is not used before
+				// !initialQuery.contains(token) to avoid having
+				// "vitol+company+vitol"
 				synchronized (querySet) {
 					if (querySet.containsKey(token)) {
 						querySet.put(token, querySet.get(token) + 1);
@@ -401,116 +447,147 @@ public class CrawlingConfig {
 
 	public String setNextQuery() {
 		String url = null;
-		if (this.querySelectionApproach == this.crawledTextBased) {
+		if (this.querySelectionApproach == this.mostFreqFeedbackText || 
+				this.querySelectionApproach == this.leastFromLast ||
+				this.querySelectionApproach == this.leastFreqFeedbackText){//this.feedbackBasedApproach == true) {
 			if (firstQuery) {// set first query
 				query = "";
-				for(String part : initialQuery){
-					initialQueryProcesses = initialQueryProcesses+"+"+ part;
+				for (String part : initialQuery) {
+					initialQueryProcesses = initialQueryProcesses + "+\"" + part+ "\"";
 				}
-				initialQueryProcesses = initialQueryProcesses.replaceFirst("\\+", "");
-				query = initialQueryProcesses; //only for vitol website
+				initialQueryProcesses = initialQueryProcesses.replaceFirst(
+						"\\+", "");
+				query = initialQueryProcesses; // only for vitol website
 				sentQueries.add(query);
 				querySet.put(query, 0); // not to use later
 				firstQuery = false;
-			} else {
-				query = getMostFreqQuery();// getLeastFreqQuery();//
+			} else if (this.querySelectionApproach == this.leastFromLast) {
+				query = fbBasedQueryGenerator
+						.setNextQueryLeastFromLast(initialQuery);
+				if (query != null) {
+					sentQueries.add(query);
+					querySet.put(query, 0);
+					query = initialQueryProcesses + "+\"" + query + "\"";
+				} else {
+					return null;
+				}
+			} else if (this.querySelectionApproach == this.mostFreqFeedbackText) {
+				query = fbBasedQueryGenerator.getMostFreqQuery(querySet,
+						initialQuery);// .getLeastFreqQuery(querySet,
+										// initialQuery);
 				sentQueries.add(query);
-				querySet.put(query, 0); // not to use later//it grows again
-				query = initialQueryProcesses+"+"+query; // for vitol 
+				querySet.put(query, 0);
+				query = initialQueryProcesses + "+\"" + query + "\"";
 				saveMostFreqTable();
+			} else if (this.querySelectionApproach == this.leastFreqFeedbackText) {
+				query = fbBasedQueryGenerator.getLeastFreqQuery(querySet,
+						initialQuery);// .getLeastFreqQuery(querySet,
+										// initialQuery);
+				sentQueries.add(query);
+				querySet.put(query, 0);
+				query = initialQueryProcesses + "+\"" + query + "\"";;
+				// saveMostFreqTable();
 			}
-		//	querySet.put(query, 0); // not to use later
-			String tempUrl = currentSiteDescription.getTemplate();
-			
-			if (tempUrl.contains("{q}")) {
-				url = currentSiteDescription.getTemplate()
-						.replace("{q}", query);
-			} else if (tempUrl.contains("{searchTerms}")) {
-				url = currentSiteDescription.getTemplate().replace(
-						"{searchTerms}", query);
-			} else if (tempUrl.contains("{query}")) {
-				url = currentSiteDescription.getTemplate().replace("{query}",
-						query);
-			}else{//in case of browsing
-				url = currentSiteDescription.getTemplate();
-			}
+			// not to use later//it grows again
+			// // for vitol
+
+			// querySet.put(query, 0); // not to use later
+
 			/*
+			 * String tempUrl = currentSiteDescription.getTemplate();
+			 * 
+			 * if (tempUrl.contains("{q}")) { url =
+			 * currentSiteDescription.getTemplate() .replace("{q}", query); }
+			 * else if (tempUrl.contains("{searchTerms}")) { url =
+			 * currentSiteDescription.getTemplate().replace( "{searchTerms}",
+			 * query); } else if (tempUrl.contains("{query}")) { url =
+			 * currentSiteDescription.getTemplate().replace("{query}", query); }
+			 * else {// in case of browsing url =
+			 * currentSiteDescription.getTemplate(); }
+			 * 
 			 * currentSiteDescription.getTemplate().replace( "{searchTerms}",
 			 * query);
+			 * 
+			 * url = url.replace("amp;", "");
+			 * System.out.println("New query, number " + queryIndex + " : " +
+			 * query); queryIndex++; return url;
 			 */
-			url = url.replace("amp;", "");
-			System.out.println("New query, number " + queryIndex + " : "
-					+ query);
-			queryIndex++;
-			return url;
-		} else if (this.querySelectionApproach == this.mostFrequentWebWords){
-			if (queryIndex < queries.size()) {
+		} else if (this.querySelectionApproach == this.PredefinedlistOfWords) {
+			if (firstQuery) {// set first query
+				query = "";
+				for (String part : initialQuery) {
+					initialQueryProcesses = initialQueryProcesses + "+\"" + part + "\"";
+				}
+				initialQueryProcesses = initialQueryProcesses.replaceFirst(
+						"\\+", "");
+				query = initialQueryProcesses; // only for vitol website
+				sentQueries.add(query);
+				querySet.put(query, 0); // not to use later
+				firstQuery = false;
+			} else if (queryIndex < queries.size()) {
 				query = queries.get(queryIndex);
 				if (!currentSiteDescription.isAcceptsStopWords()) {
 					if (isStopWord(query)) {
 						queryIndex++;
 						return setNextQuery();
-					} /*
-			if (url == null){
-				url = currentSiteDescription.getTemplate();
-			}
-		
-					 * else if(query is used before){list does not have repeated
-					 * queries queryIndex++; return setNextQuery(); }
-					 */
-					{
-						String tempUrl = currentSiteDescription.getTemplate();
-						if (tempUrl.contains("{q}")) {
-							url = currentSiteDescription.getTemplate().replace(
-									"{q}", query);
-						} else if (tempUrl.contains("{searchTerms}")) {
-							url = currentSiteDescription.getTemplate().replace(
-									"{searchTerms}", query);
-						} else if (tempUrl.contains("{query}")) {
-							url = currentSiteDescription.getTemplate().replace(
-									"{query}", query);
-						}
-						/*
-						 * currentSiteDescription.getTemplate().replace(
-						 * "{searchTerms}", query);
-						 */
-						url = url.replace("amp;", "");
-						System.out.println("New query, number " + queryIndex
-								+ " : " + query);
-						queryIndex++;
-						return url;
 					}
 				} else {
-					String tempUrl = currentSiteDescription.getTemplate();
-					if (tempUrl.contains("{q}")) {
-						url = currentSiteDescription.getTemplate().replace(
-								"{q}", query);
-					} else if (tempUrl.contains("{searchTerms}")) {
-						url = currentSiteDescription.getTemplate().replace(
-								"{searchTerms}", query);
-					} else if (tempUrl.contains("{query}")) {
-						url = currentSiteDescription.getTemplate().replace(
-								"{query}", query);
-					}
-					/*
-					 * currentSiteDescription.getTemplate().replace(
-					 * "{searchTerms}", query);
-					 */
-					url = url.replace("amp;", "");
-					System.out.println("New query, number " + queryIndex
-							+ " : " + query);
-					queryIndex++;
-					return url;
+					System.out.println("End of Query List");
+					return null;
 				}
-			} else {
-				System.out.println("End of Query List");
-				return null;
+				sentQueries.add(query);
+				querySet.put(query, 0); // not to use later
+				query = initialQueryProcesses + "+\"" + query + "\"";
 			}
-		}else if(this.querySelectionApproach == this.browsing){
-			if (url == null){
+		} else if (this.querySelectionApproach == this.browsing) {
+			if (url == null) {
 				url = currentSiteDescription.getTemplate();
 			}
+		}else if (this.querySelectionApproach == combinedLFL_PLW){
+			if (firstQuery) {// set first query
+				query = "";
+				for (String part : initialQuery) {
+				//	initialQueryProcesses = initialQueryProcesses + "+\"" + part+ "\"";
+					initialQueryProcesses = initialQueryProcesses + "+" + part+ "";
+
+				}
+				initialQueryProcesses = initialQueryProcesses.replaceFirst(
+						"\\+", "");
+				query = initialQueryProcesses; // only for vitol website
+				sentQueries.add(query);
+				querySet.put(query, 0); // not to use later
+				firstQuery = false;
+			} else {
+				query = fbBasedQueryGenerator
+						.setNextQueryIn_Feedback_ClueWeb(initialQuery, querySet, this.termFreqInClueWeb);
+				if (query != null) {
+					sentQueries.add(query);
+					querySet.put(query, 0);
+					//query = initialQueryProcesses + "+\"" + query + "\"";
+					query = initialQueryProcesses + "+" + query + "";
+
+				} else {
+					return null;
+				}
+			} 
 		}
+		String tempUrl = currentSiteDescription.getTemplate();
+		if (tempUrl.contains("{q}")) {
+			url = currentSiteDescription.getTemplate().replace("{q}", query);
+		} else if (tempUrl.contains("{searchTerms}")) {
+			url = currentSiteDescription.getTemplate().replace("{searchTerms}",
+					query);
+		} else if (tempUrl.contains("{query}")) {
+			url = currentSiteDescription.getTemplate()
+					.replace("{query}", query);
+		}
+		/*
+		 * currentSiteDescription.getTemplate().replace( "{searchTerms}",
+		 * query);
+		 */
+		url = url.replace("amp;", "");
+		System.out.println("New query, number " + queryIndex + " : " + query);
+		queryIndex++;
 		return url;
 	}
 
@@ -549,50 +626,43 @@ public class CrawlingConfig {
 	 * }
 	 */
 
-	private String getMostFreqQuery() {
-
-		List<String> mapKeys = new ArrayList<String>(querySet.keySet());
-		List<Integer> mapValues = new ArrayList<Integer>(querySet.values());
-		Collections.sort(mapValues, Collections.reverseOrder());
-
-		Iterator<Integer> valueIt = mapValues.iterator();
-		// TODO check if this is the most frequent and not the least frequent
-		int val = (Integer) valueIt.next();
-		Iterator<String> keyIt = mapKeys.iterator();
-		while (keyIt.hasNext()) {
-			String key = (String) keyIt.next();
-			int comp1 = querySet.get(key);
-
-			if (comp1 == val && !initialQuery.contains(key)) {
-				return key;
-			}
-		}
-
-		return null;
-	}
-	
-	private String getLeastFreqQuery() {
-
-		List<String> mapKeys = new ArrayList<String>(querySet.keySet());
-		List<Integer> mapValues = new ArrayList<Integer>(querySet.values());
-		Collections.sort(mapValues);
-
-		Iterator<Integer> valueIt = mapValues.iterator();
-		// TODO check if this is the most frequent and not the least frequent
-		//int val = (Integer) valueIt.next();
-		Iterator<String> keyIt = mapKeys.iterator();
-		while (keyIt.hasNext()) { // we set value to 0 not to use it later
-			String key = (String) keyIt.next();
-			int comp1 = querySet.get(key);
-
-			if (comp1 != 0 && !initialQuery.contains(key)) {
-				return key;
-			}
-		}
-
-		return null;
-	}
-
+	/*
+	 * private String getMostFreqQuery() {
+	 * 
+	 * List<String> mapKeys = new ArrayList<String>(querySet.keySet());
+	 * List<Integer> mapValues = new ArrayList<Integer>(querySet.values());
+	 * Collections.sort(mapValues, Collections.reverseOrder());
+	 * 
+	 * Iterator<Integer> valueIt = mapValues.iterator(); // TODO check if this
+	 * is the most frequent and not the least frequent int val = (Integer)
+	 * valueIt.next(); Iterator<String> keyIt = mapKeys.iterator(); while
+	 * (keyIt.hasNext()) { String key = (String) keyIt.next(); int comp1 =
+	 * querySet.get(key);
+	 * 
+	 * if (comp1 == val && !initialQuery.contains(key)) { return key; } }
+	 * 
+	 * return null; }
+	 * 
+	 * private String getLeastFreqQuery() {
+	 * 
+	 * List<String> mapKeys = new ArrayList<String>(querySet.keySet());
+	 * List<Integer> mapValues = new ArrayList<Integer>(querySet.values());
+	 * Collections.sort(mapValues);
+	 * 
+	 * while (mapValues.contains(0)) { mapValues.remove(0); } Iterator<Integer>
+	 * valueIt = mapValues.iterator();
+	 * 
+	 * // TODO check if this is the most frequent and not the least frequent int
+	 * val = (Integer) valueIt.next(); // set the lowest frequency
+	 * Iterator<String> keyIt = mapKeys.iterator(); while (keyIt.hasNext()) { //
+	 * we set value to 0 not to use it later String key = (String) keyIt.next();
+	 * int comp1 = querySet.get(key);
+	 * 
+	 * if (comp1 == val && comp1 != 0 && !initialQuery.contains(key)) { return
+	 * key; } }
+	 * 
+	 * return null; }
+	 */
 	private boolean isStopWord(String query) {
 		if (listOfStopWords == null) {
 			setListOfStopWords();
@@ -692,7 +762,7 @@ public class CrawlingConfig {
 		listOfStopWords.add("een");
 		listOfStopWords.add("pagina");
 		listOfStopWords.add("deze");
-		
+
 		listOfStopWords.add("have");
 		listOfStopWords.add("had");
 		listOfStopWords.add("will");
@@ -773,9 +843,11 @@ public class CrawlingConfig {
 		return scrShots;
 	}
 
-	public void setScrShotBrowser() {
+	public void setScrShotBrowser(String collectionName, String savePOPUP) {
 		this.scrShots = new Browser();
-		this.scrShots.setDriver();
+		scrShots.setCollectionName(collectionName);
+		scrShots.setSavePoPUPPath(savePOPUP);
+		scrShots.setDriver();
 	}
 
 	public void stopFXDriver() {
@@ -807,6 +879,12 @@ public class CrawlingConfig {
 
 	public void setQuerySelectionApproach(int querySelectionApproach) {
 		this.querySelectionApproach = querySelectionApproach;
+		if (querySelectionApproach == this.PredefinedlistOfWords
+				|| querySelectionApproach == this.browsing) {
+			feedbackBasedApproach = true;
+		} else {
+			feedbackBasedApproach = true;
+		}
 	}
 
 	public void saveCrawlStatus(ArrayList<String> listOfReturnedResultsOfSRPage) {
@@ -818,21 +896,22 @@ public class CrawlingConfig {
 	}
 
 	public void saveCrawlStatus(String crawledPage) {// ,
-		//synchronized (this) {
-			this.saveStringInFile(crawledPage, this.pathToVisitedPagesPerQuery,
-					true);
-			this.saveStringInFile(crawledPage, this.pathToVisitedPagesDoc, true);
-			this.saveStringInFile(this.currentSRPageURL,
-					this.pathToLastSearchResultPage, false);
+		// synchronized (this) {
 
-			this.saveStringInFile(crawledPage, this.pathToLastLinkDoc, false);
-	//	}
-	}
+		this.saveStringInFile(crawledPage, this.pathToVisitedPagesDoc, true);
+		/*
+		 * this.saveStringInFile(crawledPage, this.pathToVisitedPagesPerQuery,
+		 * true); this.saveStringInFile(this.currentSRPageURL,
+		 * this.pathToLastSearchResultPage, false);
+		 * 
+		 * this.saveStringInFile(crawledPage, this.pathToLastLinkDoc, false); //
+		 * }
+		 */}
 
 	public void saveCrawlStatus(int crawledPage, String path) {// ,
-	//	synchronized (this) {
-			this.saveStringInFile(crawledPage + "", path, false);
-	//	}
+		// synchronized (this) {
+		this.saveStringInFile(crawledPage + "", path, false);
+		// }
 	}
 
 	public void saveCrawlStatusCollectionName() {// ,
@@ -1164,6 +1243,41 @@ public class CrawlingConfig {
 			}
 		}
 
+	}
+
+	public void setTermFreqInClueWeb(String filePath) {
+		this.termFreqInClueWeb = new HashMap<String, Integer>();
+		try {
+			File file = new File(filePath);
+			FileReader fstream = new FileReader(file);
+			BufferedReader in = new BufferedReader(fstream);
+			String line;
+			while ((line = in.readLine()) != null) {
+				// String line = in.readLine();
+				String[] a = line.split("\t");
+				String query = a[0];
+				int freq = Integer.parseInt(a[1]);
+				// String query = line.replaceAll("[0-9]*", "").trim();
+				if (!termFreqInClueWeb.containsKey(query)) {
+					termFreqInClueWeb.put(query, freq);
+				}
+			}
+			in.close();
+			fstream.close();
+		} catch (Exception e) {// Catch exception if any
+			System.err.println("Error: " + e.getMessage());
+		}
+	} 
+	public void setSaveDSextractedInfoInFile(boolean b) {
+		this.SaveDSextractedInfoInFile = b;
+	}
+
+	public void printQueryStatistics() {
+		// TODO Auto-generated method stub
+		if (fbBasedQueryGenerator != null) {
+			this.fbBasedQueryGenerator.printQueryStatistics();
+
+		}
 	}
 
 }
