@@ -1,5 +1,7 @@
 package db.infiniti.config;
 
+import gnu.trove.map.hash.TObjectIntHashMap;
+
 import java.sql.Array;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,7 +12,7 @@ import java.util.List;
 
 public class TextEditor {
 
-	HashMap<String, Integer> setTermFreq = new HashMap<String, Integer>();
+	TObjectIntHashMap<String>  setTermFreq = new TObjectIntHashMap<String>();
 	HashSet<String> listOfStopWords;
 
 	public HashMap<String, Integer> setTermFreq(String pageContent) {
@@ -21,9 +23,9 @@ public class TextEditor {
 			if (!token.equalsIgnoreCase("") && !this.isStopWord(token)) {
 				// it is not used before
 				if (termFreqSet.containsKey(token)) {
-					termFreqSet.put(token, termFreqSet.get(token) + 1);
+					termFreqSet.put(token.intern(), termFreqSet.get(token) + 1);
 				} else {
-					termFreqSet.put(token, 1);
+					termFreqSet.put(token.intern(), 1);
 				}
 			}
 		}

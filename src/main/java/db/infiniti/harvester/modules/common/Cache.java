@@ -122,6 +122,7 @@ public class Cache {
 		try {
 			long time = System.currentTimeMillis();
 			if(fileNumberInCache == 6549 || fileNumberInCache == 5379){
+				//TODO check
 				return pageContent; 
 			}
 			File file = new File(cacheMapDirectoryPath+fileNumberInCache+".txt");

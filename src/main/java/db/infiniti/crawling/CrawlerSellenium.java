@@ -103,7 +103,7 @@ public class CrawlerSellenium {
 	Element rootElement = null;
 	int repeatedLinks = 0;
 	int totalreturnedResForQuery = 0;
-	List<Integer> totalreturnedResForQueryList = new ArrayList<Integer>();
+	List<Integer> totalreturnedResForQueryList = new ArrayList<Integer>(1);
 	int totalreturnedRes = 0;
 	List<Integer> totalreturnedResList = new ArrayList<Integer>();
 	boolean stopCrawlForQuery = false;
@@ -305,7 +305,7 @@ public class CrawlerSellenium {
 								} else {
 									pageHTMLContent = detailedPagesbrowser
 											.getPageSource(resultLink);
-									pageContent = detailedPagesbrowser.getText();
+									pageContent = detailedPagesbrowser.getPageText();//.getText();
 									crawlingConfig.cache.saveInCache(
 											resultLink, pageContent,
 											pageHTMLContent);

@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 
+import net.htmlparser.jericho.Logger;
 import net.htmlparser.jericho.Renderer;
 import net.htmlparser.jericho.Segment;
 import net.htmlparser.jericho.Source;
@@ -16,11 +17,52 @@ public class TextFromHtml {
 		String htmlText = "";
 		try {
 			Source htmlSource = new Source(htmlCode);
+			htmlSource.setLogger(new Logger() {
+				
+				public void warn(String message) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				public boolean isWarnEnabled() {
+					// TODO Auto-generated method stub
+					return false;
+				}
+				
+				public boolean isInfoEnabled() {
+					// TODO Auto-generated method stub
+					return false;
+				}
+				
+				public boolean isErrorEnabled() {
+					// TODO Auto-generated method stub
+					return false;
+				}
+				
+				public boolean isDebugEnabled() {
+					// TODO Auto-generated method stub
+					return false;
+				}
+				
+				public void info(String message) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				public void error(String message) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				public void debug(String message) {
+					// TODO Auto-generated method stub
+					
+				}
+			});
 			Segment htmlSeg = new Segment(htmlSource, 0, htmlSource.length());
 			Renderer htmlRend = new Renderer(htmlSeg);
 			htmlRend.setMaxLineLength(3000);
 			// int i = htmlRend.getMaxLineLength();
-
 			htmlText = htmlRend.toString();
 			htmlText = htmlText.replaceAll("\\*", "").trim();
 			htmlText = htmlText.replaceAll("<[^<>]+>", "").trim();
@@ -32,8 +74,12 @@ public class TextFromHtml {
 			}
 		} catch (Exception e) {// Catch exception if any
 			System.err.println("Error: " + e.getMessage());
+		} catch(java.lang.OutOfMemoryError error){
+			System.out.println("Error: " + error.getMessage());
+		}catch(java.lang.StackOverflowError e){
+			System.out.println("Error: " + e.getMessage());
 		}
-		return htmlText;
+		return htmlText.toLowerCase();
 	}
 
 	public static void extractTextFromHtmlFilesInFolder() {

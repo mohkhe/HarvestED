@@ -513,7 +513,7 @@ public class Browser {
 		t.start();
 
 		try {
-			t.join(2 * timeOutThread);
+			t.join(4 * timeOutThread);
 		} catch (InterruptedException e) { // ignore
 		}
 		this.getSourceTime = System.currentTimeMillis() - time;

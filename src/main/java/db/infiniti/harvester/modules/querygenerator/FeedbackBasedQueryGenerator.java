@@ -1,7 +1,8 @@
 package db.infiniti.harvester.modules.querygenerator;
 
+import gnu.trove.map.hash.TObjectIntHashMap;
+
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -14,12 +15,14 @@ public class FeedbackBasedQueryGenerator {
 
 	HashMap<String, QueryStatisticDS> queriesStatMap = new HashMap<String, QueryStatisticDS>();
 
-	HashMap<String, Integer> generalTermFreqSet = new HashMap<String, Integer>();
+	// HashMap<String, Integer> generalTermFreqSet = new HashMap<String,
+	// Integer>();
+	TObjectIntHashMap<String> generalTermFreqSet = new TObjectIntHashMap<String>();
 	HashMap<Integer, HashMap<String, Integer>> docNumberTermsFrequencies = new HashMap<Integer, HashMap<String, Integer>>();
 	HashMap<Integer, HashMap<String, Integer>> previousQueryDocNumberTermsFrequencies = new HashMap<Integer, HashMap<String, Integer>>();
 
 	HashMap<String, ArrayList<Integer>> termDocumentDistribution = new HashMap<String, ArrayList<Integer>>();
-	//String initialQuery = "";// it should be set
+	// String initialQuery = "";// it should be set
 	ArrayList<String> sentQueries = new ArrayList<String>();
 	TextEditor textEditor = new TextEditor();
 
@@ -41,11 +44,11 @@ public class FeedbackBasedQueryGenerator {
 				synchronized (generalTermFreqSet) {
 					if (!sentQueries.contains(token)) {
 						if (generalTermFreqSet.containsKey(token)) {
-							generalTermFreqSet.put(token,
+							generalTermFreqSet.put(token.intern(),
 									generalTermFreqSet.get(token)
 											+ docTermFreqSet.get(token));
 						} else {
-							generalTermFreqSet.put(token,
+							generalTermFreqSet.put(token.intern(),
 									docTermFreqSet.get(token));
 
 						}
@@ -53,10 +56,13 @@ public class FeedbackBasedQueryGenerator {
 						if (termDocumentDistribution.containsKey(token)) {
 							termDocumentDistribution.get(token).add(
 									searchResultReturnedNumber);
+							termDocumentDistribution.get(token).trimToSize();
 						} else {
 							ArrayList<Integer> tempArray = new ArrayList<Integer>();
 							tempArray.add(searchResultReturnedNumber);
-							termDocumentDistribution.put(token, tempArray);
+							tempArray.trimToSize();
+							termDocumentDistribution.put(token.intern(),
+									tempArray);
 						}
 					}
 				}
@@ -75,10 +81,11 @@ public class FeedbackBasedQueryGenerator {
 		Iterator<Integer> docNum;
 		if (!docNumberTermsFrequencies.isEmpty()) {// no results for query
 			previousQueryDocNumberTermsFrequencies.clear();
-			previousQueryDocNumberTermsFrequencies.putAll(docNumberTermsFrequencies);
+			previousQueryDocNumberTermsFrequencies
+					.putAll(docNumberTermsFrequencies);
 
 		}
-		if(!previousQueryDocNumberTermsFrequencies.isEmpty()){
+		if (!previousQueryDocNumberTermsFrequencies.isEmpty()) {
 			docNum = previousQueryDocNumberTermsFrequencies.keySet().iterator();
 			while (docNum.hasNext()) {
 				temp = docNum.next();
@@ -86,19 +93,19 @@ public class FeedbackBasedQueryGenerator {
 					lastPage = temp;
 				}
 			}
-			while(nextQuery == null){
-				if(lastPage>0){
+			while (nextQuery == null) {
+				if (lastPage > 0) {
 					HashMap<String, Integer> termFreqSet = previousQueryDocNumberTermsFrequencies
 							.get(lastPage);
 					nextQuery = textEditor.getLeastFreqQuery(termFreqSet,
 							initialQuery, sentQueries);
-					lastPage = lastPage-1;
+					lastPage = lastPage - 1;
 				}
 			}
 			QueryStatisticDS queryStat = new QueryStatisticDS(nextQuery);
 			queryStat.setDocumentsQueryAppearedIn(termDocumentDistribution
 					.get(nextQuery));
-			queriesStatMap.put(nextQuery, queryStat);
+			queriesStatMap.put(nextQuery.intern(), queryStat);
 
 			docNumberTermsFrequencies.clear();
 			termDocumentDistribution.clear();
@@ -108,19 +115,23 @@ public class FeedbackBasedQueryGenerator {
 		return null;
 	}
 
-	public String setNextQueryIn_Feedback_ClueWeb(List<String> initialQuery, HashMap<String, Integer> querySet, HashMap<String, Integer> termFreqInClueWeb2) {
+	public String setNextQueryIn_Feedback_ClueWeb(List<String> initialQuery,
+			Set<String> queryArray, HashMap<String, Integer> termFreqInClueWeb2) {
 
 		Iterator<String> termInClueWeb = termFreqInClueWeb2.keySet().iterator();
 		// TODO check if this is the most frequent and not the least frequent
 		while (termInClueWeb.hasNext()) {
 			String term = termInClueWeb.next();
-			if (!initialQuery.contains(term) && querySet.containsKey(term) && !sentQueries.contains(term)) {
-				sentQueries.add(term);
+			if (!initialQuery.contains(term)
+					&& !this.generalTermFreqSet.contains(term)
+					&& !sentQueries.contains(term)) {
+				sentQueries.add(term.intern());
+				sentQueries.trimToSize();
 				QueryStatisticDS queryStat = new QueryStatisticDS(term);
-				queryStat.setFreqInAllReturnedDocsForQuery(querySet.get(term));
+				// queryStat.setFreqInAllReturnedDocsForQuery(querySet.get(term));
 				queryStat.setDocumentsQueryAppearedIn(termDocumentDistribution
 						.get(term));
-				queriesStatMap.put(term, queryStat);
+				queriesStatMap.put(term.intern(), queryStat);
 
 				return term;
 			}
@@ -128,16 +139,26 @@ public class FeedbackBasedQueryGenerator {
 
 		return null;
 	}
-	
-	public String getMostFreqQuery(HashMap<String, Integer> querySet, List<String> initialQuery) {
+
+	public String getMostFreqQuery(TObjectIntHashMap<String> querySet,
+			List<String> initialQuery) {
 
 		List<String> mapKeys = new ArrayList<String>(querySet.keySet());
-		List<Integer> mapValues = new ArrayList<Integer>(querySet.values());
-		Collections.sort(mapValues, Collections.reverseOrder());
+		// List<Integer> mapValues = new ArrayList<Integer>(querySet.values());
+		int[] mapValues = querySet.values();
+		// Collections.sort(mapValues, Collections.reverseOrder());
 
-		Iterator<Integer> valueIt = mapValues.iterator();
+		// Iterator<Integer> valueIt = mapValues.iterator();
 		// TODO check if this is the most frequent and not the least frequent
-		int val = (Integer) valueIt.next();
+
+		int val = Integer.MIN_VALUE;
+		for (int j : mapValues) {
+			if (j > val) {
+				val = j;
+			}
+		}
+
+		// int val = (Integer) valueIt.next();
 		Iterator<String> keyIt = mapKeys.iterator();
 		while (keyIt.hasNext()) {
 			String key = (String) keyIt.next();
@@ -145,12 +166,12 @@ public class FeedbackBasedQueryGenerator {
 
 			if (comp1 == val && !initialQuery.contains(key)) {
 				sentQueries.add(key);
-
+				sentQueries.trimToSize();
 				QueryStatisticDS queryStat = new QueryStatisticDS(key);
 				queryStat.setFreqInAllReturnedDocsForQuery(val);
 				queryStat.setDocumentsQueryAppearedIn(termDocumentDistribution
 						.get(key));
-				queriesStatMap.put(key, queryStat);
+				queriesStatMap.put(key.intern(), queryStat);
 
 				return key;
 			}
@@ -159,28 +180,33 @@ public class FeedbackBasedQueryGenerator {
 		return null;
 	}
 
-	public String getLeastFreqQuery(HashMap<String, Integer> querySet, List<String> initialQuery) {
+	public String getLeastFreqQuery(TObjectIntHashMap<String> querySet,
+			List<String> initialQuery) {
 
-		if(querySet == null){
+		if (querySet == null) {
 			return null;
-		}else if (querySet.isEmpty()){
+		} else if (querySet.isEmpty()) {
 			return null;
 		}
 		List<String> mapKeys = new ArrayList<String>(querySet.keySet());
-		List<Integer> mapValues = new ArrayList<Integer>(querySet.values());
-		int val;
-		if (!mapValues.contains(1)){
-			Collections.sort(mapValues);
-			while (mapValues.contains(0)) {
-				mapValues.remove(0);
+		int[] mapValues = querySet.values();
+		/*
+		 * if (!mapValues.contains(1)){ Collections.sort(mapValues); while
+		 * (mapValues.contains(0)) { mapValues.remove(0); } Iterator<Integer>
+		 * valueIt = mapValues.iterator();
+		 * 
+		 * // TODO check if this is the most frequent and not the least frequent
+		 * val = (Integer) valueIt.next(); }else{ val = 1; }
+		 */
+		int val = Integer.MAX_VALUE;
+		int i = 0;
+		for (int j : mapValues) {
+			if (j < val && j != 0) {
+				val = j;
+				i++;
 			}
-			Iterator<Integer> valueIt = mapValues.iterator();
-	
-			// TODO check if this is the most frequent and not the least frequent
-			val = (Integer) valueIt.next();
-		}else{
-			val = 1;
 		}
+
 		// set the lowest frequency
 		Iterator<String> keyIt = mapKeys.iterator();
 		while (keyIt.hasNext()) { // we set value to 0 not to use it later
@@ -193,7 +219,7 @@ public class FeedbackBasedQueryGenerator {
 				queryStat.setFreqInAllReturnedDocsForQuery(val);
 				queryStat.setDocumentsQueryAppearedIn(termDocumentDistribution
 						.get(key));
-				queriesStatMap.put(key, queryStat);
+				queriesStatMap.put(key.intern(), queryStat);
 
 				return key;
 			}
@@ -222,17 +248,19 @@ public class FeedbackBasedQueryGenerator {
 				System.out.println("Query general frequency not present");
 			}
 			ArrayList<Integer> docs = queryStat.getDocumentsQueryAppearedIn();
-			if(docs.isEmpty()){
-				System.out.print("No docs problem");
+			if (docs != null) {
+				if (docs.isEmpty()) {
+					System.out.print("No docs problem");
 
-			}else{
-				Iterator e = docs.iterator();
-				System.out.println("Query appeared in these documents");
-				while (e.hasNext()) {
-					System.out.print(e.next() + ",");
+				} else {
+					Iterator e = docs.iterator();
+					System.out.println("Query appeared in these documents");
+					while (e.hasNext()) {
+						System.out.print(e.next() + ",");
+					}
 				}
 			}
-			
+
 		}
 	}
 }

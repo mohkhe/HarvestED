@@ -1,5 +1,8 @@
 package db.infiniti.config;
 
+import gnu.trove.map.hash.TObjectIntHashMap;
+import gnu.trove.set.hash.THashSet;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -7,9 +10,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -41,12 +42,14 @@ public class CrawlingConfig {
 	// WebTools webTools;
 	ArrayList<WebsiteDS> listOfWebsites;
 	int queryIndex = 0;
-	HashSet<String> listOfStopWords;
+	THashSet<String> listOfStopWords;
 	Browser scrShots;
 	HashMap<Browser, Boolean> detailedPagesBrowsers = new HashMap<Browser, Boolean>();
-	HashMap<String, Integer> querySet = new HashMap<String, Integer>();
+	TObjectIntHashMap<String> querySet = new TObjectIntHashMap<String>();
+	//HashSet<String> queryArray = new HashSet<String>();
+	Set<String> queryArray = new THashSet<String>();
 	HashMap<String, Integer> termFreqInClueWeb = new HashMap<String, Integer>();
-	
+
 	List<String> sentQueries = new ArrayList<String>();
 
 	boolean extractTextFromSRPages;
@@ -339,7 +342,7 @@ public class CrawlingConfig {
 			 * queries.add("vitol+trading"); queries.add("vitol+foundation");
 			 * queries.add("vitol+group");
 			 */
-			//TODO for now to put everything in cache
+			// TODO for now to put everything in cache
 			fbBasedQueryGenerator = new FeedbackBasedQueryGenerator();
 			queries = readQueriesFromFile(queries, queriesPath);
 			// //hazf-> queries = readQueriesFromFile(queries, queriesFilePath);
@@ -368,7 +371,7 @@ public class CrawlingConfig {
 				String query = line.split("\t")[0];
 				// String query = line.replaceAll("[0-9]*", "").trim();
 				if (!queries.contains(query)) {
-					queries.add(query);
+					queries.add(query.intern());
 				}
 			}
 			in.close();
@@ -408,13 +411,23 @@ public class CrawlingConfig {
 					&& !sentQueries.contains(token)) {// it is not used before
 				// !initialQuery.contains(token) to avoid having
 				// "vitol+company+vitol"
-				synchronized (querySet) {
-					if (querySet.containsKey(token)) {
-						querySet.put(token, querySet.get(token) + 1);
+				if (this.querySelectionApproach == this.combinedLFL_PLW) {
+					
+				/*	synchronized (queryArray) {
+						if(termFreqInClueWeb.containsKey(token)){
+							queryArray.add(token.intern());
+						}
+					}*/
+				} else {
+					synchronized (querySet) {
+						if (querySet.containsKey(token)) {
+							querySet.put(token.intern(),
+									querySet.get(token) + 1);
 
-					} else {
-						querySet.put(token, 1);
+						} else {
+							querySet.put(token.intern(), 1);
 
+						}
 					}
 				}
 			}
@@ -447,26 +460,30 @@ public class CrawlingConfig {
 
 	public String setNextQuery() {
 		String url = null;
-		if (this.querySelectionApproach == this.mostFreqFeedbackText || 
-				this.querySelectionApproach == this.leastFromLast ||
-				this.querySelectionApproach == this.leastFreqFeedbackText){//this.feedbackBasedApproach == true) {
+		if (this.querySelectionApproach == this.mostFreqFeedbackText
+				|| this.querySelectionApproach == this.leastFromLast
+				|| this.querySelectionApproach == this.leastFreqFeedbackText) {// this.feedbackBasedApproach
+																				// ==
+																				// true)
+																				// {
 			if (firstQuery) {// set first query
 				query = "";
 				for (String part : initialQuery) {
-					initialQueryProcesses = initialQueryProcesses + "+\"" + part+ "\"";
+					initialQueryProcesses = initialQueryProcesses + "+\""
+							+ part + "\"";
 				}
 				initialQueryProcesses = initialQueryProcesses.replaceFirst(
 						"\\+", "");
 				query = initialQueryProcesses; // only for vitol website
-				sentQueries.add(query);
-				querySet.put(query, 0); // not to use later
+				sentQueries.add(query.intern());
+				querySet.put(query.intern(), 0); // not to use later
 				firstQuery = false;
 			} else if (this.querySelectionApproach == this.leastFromLast) {
 				query = fbBasedQueryGenerator
 						.setNextQueryLeastFromLast(initialQuery);
 				if (query != null) {
-					sentQueries.add(query);
-					querySet.put(query, 0);
+					sentQueries.add(query.intern());
+					querySet.put(query.intern(), 0);
 					query = initialQueryProcesses + "+\"" + query + "\"";
 				} else {
 					return null;
@@ -475,17 +492,18 @@ public class CrawlingConfig {
 				query = fbBasedQueryGenerator.getMostFreqQuery(querySet,
 						initialQuery);// .getLeastFreqQuery(querySet,
 										// initialQuery);
-				sentQueries.add(query);
-				querySet.put(query, 0);
+				sentQueries.add(query.intern());
+				querySet.put(query.intern(), 0);
 				query = initialQueryProcesses + "+\"" + query + "\"";
 				saveMostFreqTable();
 			} else if (this.querySelectionApproach == this.leastFreqFeedbackText) {
 				query = fbBasedQueryGenerator.getLeastFreqQuery(querySet,
 						initialQuery);// .getLeastFreqQuery(querySet,
 										// initialQuery);
-				sentQueries.add(query);
-				querySet.put(query, 0);
-				query = initialQueryProcesses + "+\"" + query + "\"";;
+				sentQueries.add(query.intern());
+				querySet.put(query.intern(), 0);
+				query = initialQueryProcesses + "+\"" + query + "\"";
+				;
 				// saveMostFreqTable();
 			}
 			// not to use later//it grows again
@@ -516,13 +534,14 @@ public class CrawlingConfig {
 			if (firstQuery) {// set first query
 				query = "";
 				for (String part : initialQuery) {
-					initialQueryProcesses = initialQueryProcesses + "+\"" + part + "\"";
+					initialQueryProcesses = initialQueryProcesses + "+\""
+							+ part + "\"";
 				}
 				initialQueryProcesses = initialQueryProcesses.replaceFirst(
 						"\\+", "");
 				query = initialQueryProcesses; // only for vitol website
-				sentQueries.add(query);
-				querySet.put(query, 0); // not to use later
+				sentQueries.add(query.intern());
+				querySet.put(query.intern(), 0); // not to use later
 				firstQuery = false;
 			} else if (queryIndex < queries.size()) {
 				query = queries.get(queryIndex);
@@ -535,41 +554,43 @@ public class CrawlingConfig {
 					System.out.println("End of Query List");
 					return null;
 				}
-				sentQueries.add(query);
-				querySet.put(query, 0); // not to use later
+				sentQueries.add(query.intern());
+				querySet.put(query.intern(), 0); // not to use later
 				query = initialQueryProcesses + "+\"" + query + "\"";
 			}
 		} else if (this.querySelectionApproach == this.browsing) {
 			if (url == null) {
 				url = currentSiteDescription.getTemplate();
 			}
-		}else if (this.querySelectionApproach == combinedLFL_PLW){
+		} else if (this.querySelectionApproach == combinedLFL_PLW) {
 			if (firstQuery) {// set first query
 				query = "";
 				for (String part : initialQuery) {
-				//	initialQueryProcesses = initialQueryProcesses + "+\"" + part+ "\"";
-					initialQueryProcesses = initialQueryProcesses + "+" + part+ "";
+					// initialQueryProcesses = initialQueryProcesses + "+\"" +
+					// part+ "\"";
+					initialQueryProcesses = initialQueryProcesses + "+" + part
+							+ "";
 
 				}
 				initialQueryProcesses = initialQueryProcesses.replaceFirst(
 						"\\+", "");
 				query = initialQueryProcesses; // only for vitol website
-				sentQueries.add(query);
-				querySet.put(query, 0); // not to use later
+				sentQueries.add(query.intern());
+				// queryArray.add(query.intern(), 0); // not to use later
 				firstQuery = false;
 			} else {
-				query = fbBasedQueryGenerator
-						.setNextQueryIn_Feedback_ClueWeb(initialQuery, querySet, this.termFreqInClueWeb);
+				query = fbBasedQueryGenerator.setNextQueryIn_Feedback_ClueWeb(
+						initialQuery, queryArray, this.termFreqInClueWeb);
 				if (query != null) {
-					sentQueries.add(query);
-					querySet.put(query, 0);
-					//query = initialQueryProcesses + "+\"" + query + "\"";
+					sentQueries.add(query.intern());
+					querySet.put(query.intern(), 0);
+					// query = initialQueryProcesses + "+\"" + query + "\"";
 					query = initialQueryProcesses + "+" + query + "";
 
 				} else {
 					return null;
 				}
-			} 
+			}
 		}
 		String tempUrl = currentSiteDescription.getTemplate();
 		if (tempUrl.contains("{q}")) {
@@ -734,8 +755,8 @@ public class CrawlingConfig {
 		this.queryIndex = queryIndex;
 	}
 
-	public HashSet<String> setListOfStopWords() {
-		listOfStopWords = new HashSet<String>();
+	public Set<String> setListOfStopWords() {
+		listOfStopWords = new THashSet<String>();
 		listOfStopWords.add("the");
 		listOfStopWords.add("a");
 		listOfStopWords.add("an");
@@ -834,7 +855,7 @@ public class CrawlingConfig {
 		return listOfStopWords;
 	}
 
-	public void setListOfStopWords(HashSet<String> listOfStopWords) {
+	public void setListOfStopWords(THashSet<String> listOfStopWords) {
 
 		this.listOfStopWords = listOfStopWords;
 	}
@@ -1198,6 +1219,7 @@ public class CrawlingConfig {
 
 	public void waitTillOneIsFree() {
 		boolean oneBrowsersIsFree = false;
+		long startTime = System.currentTimeMillis();
 		while (!oneBrowsersIsFree) {
 			Iterator<Browser> iter = this.detailedPagesBrowsers.keySet()
 					.iterator();
@@ -1231,8 +1253,9 @@ public class CrawlingConfig {
 					.iterator();
 			boolean noBusyBrowser = true;
 			while (iter.hasNext()) {
-				boolean ifFree = this.detailedPagesBrowsers.get((Browser) iter
-						.next());
+				Browser br = (Browser) iter
+						.next();
+				boolean ifFree = this.detailedPagesBrowsers.get(br);
 				if (!ifFree) {
 					noBusyBrowser = false;
 					break;
@@ -1259,7 +1282,7 @@ public class CrawlingConfig {
 				int freq = Integer.parseInt(a[1]);
 				// String query = line.replaceAll("[0-9]*", "").trim();
 				if (!termFreqInClueWeb.containsKey(query)) {
-					termFreqInClueWeb.put(query, freq);
+					termFreqInClueWeb.put(query.intern(), freq);
 				}
 			}
 			in.close();
@@ -1267,7 +1290,8 @@ public class CrawlingConfig {
 		} catch (Exception e) {// Catch exception if any
 			System.err.println("Error: " + e.getMessage());
 		}
-	} 
+	}
+
 	public void setSaveDSextractedInfoInFile(boolean b) {
 		this.SaveDSextractedInfoInFile = b;
 	}
