@@ -2,6 +2,7 @@ package db.infiniti.crawling;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import db.infiniti.config.CrawlingConfig;
 
@@ -73,7 +74,9 @@ public class MainClass extends Thread {
 		crawlingConfig.setQuerySelectionApproach(crawlingConfig.combinedLFL_PLW);
 		//PredefinedlistOfWords - mostFreqFeedbackText - browsing - leastFromLast - leastFreqFeedbackText - combinedLFL_PLW
 		crawlingConfig.setQueries(queryPoolPath);
-
+		//crawlingConfig.setInitialQuery(Arrays.asList("vitol",//"company"));
+		crawlingConfig.setInitialQuery(Arrays.asList("brinksma"));
+		crawlingConfig.setIndexed(false);
 		
 		@SuppressWarnings("unused")
 		int totalNumOfWebsites = 0;
@@ -103,8 +106,9 @@ public class MainClass extends Thread {
 			} else {
 				crawlingConfig.setCurrentSiteDescription(readFromDB,
 						numberOfCrawledSources);
-				crawlingConfig.setCollectionName(crawlingConfig
-						.getCurrentSiteDescription().getName());
+			/*	crawlingConfig.setCollectionName(crawlingConfig
+						.getCurrentSiteDescription().getName());*/
+				crawlingConfig.setCollectionName("google.com.brinksma");
 			}
 		//	crawlingConfig.setWebTools(new WebTools());// to extract pages and
 														// the content
@@ -124,7 +128,7 @@ public class MainClass extends Thread {
 							+ crawlingConfig.getCollectionName() + "/"
 							+ "crawlstatus/");
 			
-			crawlingConfig.setCache("crawledData/"+crawlingConfig.getCollectionName()+"/"+"cache/");
+			crawlingConfig.setCache("crawledData/"+crawlingConfig.getCollectionName()+"/"+"cache/", crawlingConfig.isIndexed());
 			
 			crawlingConfig.setPathToVisitedPagesDoc(crawlingConfig
 					.getCrawlStatusPath() + "visited-pages");

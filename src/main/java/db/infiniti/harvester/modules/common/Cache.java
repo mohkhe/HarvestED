@@ -9,13 +9,21 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 
+import org.apache.lucene.queryParser.ParseException;
+
+import db.infiniti.config.IndexesConfig;
+
 public class Cache {
 
 	HashMap<String, Integer> cachedURLsFileNames = new HashMap<String, Integer>();
 	BufferedWriter out;
 	FileWriter fstream;
 	String cacheMapDirectoryPath;
-	String cacheMapFilePath ;
+	String cacheMapFilePath;
+	public IndexesConfig indexOld;
+	public IndexesConfig indexNew;
+	public String textOfURL = "";
+	public String sourceCodeOfURL = "";
 
 	int lastChachedPageFileNumber = 0;
 
@@ -29,11 +37,11 @@ public class Cache {
 		if (!file.exists()) {
 			file.mkdir();
 		}
-		cacheMapFilePath = cacheMapDirectoryPath+"cashedurlsfilenames.txt";
+		cacheMapFilePath = cacheMapDirectoryPath + "cashedurlsfilenames.txt";
 	}
 
 	public void prepareCacheReadWrite() {
-		
+
 		try {
 			fstream = new FileWriter(cacheMapFilePath, true);
 			out = new BufferedWriter(fstream);
@@ -86,87 +94,126 @@ public class Cache {
 			this.cachedURLsFileNames.put(URL, lastChachedPageFileNumber);
 			out.write(URL + "\t" + lastChachedPageFileNumber + "\n");
 			out.flush();
-			
-			FileWriter fstreamFile = new FileWriter(cacheMapDirectoryPath+lastChachedPageFileNumber+".txt", false);
+
+			FileWriter fstreamFile = new FileWriter(cacheMapDirectoryPath
+					+ lastChachedPageFileNumber + ".txt", false);
 			BufferedWriter outFile = new BufferedWriter(fstreamFile);
 			outFile.write(pageContent);
 			outFile.flush();
 			outFile.close();
 			fstreamFile.close();
-			
-			fstreamFile = new FileWriter(cacheMapDirectoryPath+lastChachedPageFileNumber+".html", false);
+
+			fstreamFile = new FileWriter(cacheMapDirectoryPath
+					+ lastChachedPageFileNumber + ".html", false);
 			outFile = new BufferedWriter(fstreamFile);
 			outFile.write(pageHTML);
 			outFile.flush();
 			outFile.close();
 			fstreamFile.close();
-			
+
 			lastChachedPageFileNumber++;
 		} catch (Exception e) {// Catch exception if any
 			System.err.println("Error: " + e.getMessage());
 		}
 	}
 
-	public boolean existsAlreadyInCache(String url) {
-		if (this.cachedURLsFileNames.containsKey(url)) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	public String getPageTextContentFromCache(String url) {
-		//alreadychecked if it exists
-		int fileNumberInCache = cachedURLsFileNames.get(url);
-		String pageContent = "";
-		try {
-			long time = System.currentTimeMillis();
-			if(fileNumberInCache == 6549 || fileNumberInCache == 5379){
-				//TODO check
-				return pageContent; 
-			}
-			File file = new File(cacheMapDirectoryPath+fileNumberInCache+".txt");
-			FileReader fstream = new FileReader(file);
-			BufferedReader in = new BufferedReader(fstream);
-			String line = "";
-			while ((line = in.readLine()) != null) {
-				pageContent = pageContent + line;
-				if((System.currentTimeMillis()-time)>4000){
-					break;
+	public boolean existsAlreadyInCacheOrIndex(String url, boolean isIndexed) {
+		if (isIndexed) {
+			try {
+				if (indexOld.searchIndex(url)) {
+					textOfURL = indexOld.textOfURL;
+					sourceCodeOfURL = indexOld.sourceCodeOfURL;
+					if (!indexNew.searchIndex(url)) {
+						indexNew.index(url, textOfURL, sourceCodeOfURL);
+					}
+					return true;
+				} else if (indexNew.searchIndex(url)) {
+					textOfURL = indexOld.textOfURL;
+					sourceCodeOfURL = indexOld.sourceCodeOfURL;
+					return true;
+				} else {
+					return false;
 				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-			in.close();
-			fstream.close();
-		} catch (Exception e) {// Catch exception if any
-			System.err.println("Error: " + e.getMessage());
+		} else {
+			if (this.cachedURLsFileNames.containsKey(url)) {
+				return true;
+			} else {
+				return false;
+			}
 		}
-
-		return pageContent;
+		return false;
 	}
-	
-	public String getPageHTMLContentFromCache(String url) {
-		//alreadychecked if it exists
-		int fileNumberInCache = cachedURLsFileNames.get(url);
+
+	public String getPageTextContentFromCache(String url, boolean isIndexed) {
 		String pageContent = "";
-		try {
-			File file = new File(cacheMapDirectoryPath+fileNumberInCache+".html");
-			FileReader fstream = new FileReader(file);
-			BufferedReader in = new BufferedReader(fstream);
-			String line = "";
-			while ((line = in.readLine()) != null) {
-				pageContent = pageContent + line;
-			}
-			in.close();
-			fstream.close();
-		} catch (Exception e) {// Catch exception if any
-			System.err.println("Error: " + e.getMessage());
-		}
 
+		if (isIndexed) {
+			pageContent = this.textOfURL;
+		} else {
+			// alreadychecked if it exists
+			int fileNumberInCache = cachedURLsFileNames.get(url);
+			try {
+				long time = System.currentTimeMillis();
+				if (fileNumberInCache == 6549 || fileNumberInCache == 5379) {
+					// TODO check
+					return pageContent;
+				}
+				File file = new File(cacheMapDirectoryPath + fileNumberInCache
+						+ ".txt");
+				FileReader fstream = new FileReader(file);
+				BufferedReader in = new BufferedReader(fstream);
+				String line = "";
+				while ((line = in.readLine()) != null) {
+					pageContent = pageContent + line;
+					if ((System.currentTimeMillis() - time) > 4000) {
+						break;
+					}
+				}
+				in.close();
+				fstream.close();
+			} catch (Exception e) {// Catch exception if any
+				System.err.println("Error: " + e.getMessage());
+			}
+		}
 		return pageContent;
 	}
-	
-	
-	public void closeCache(){
+
+	public String getPageHTMLContentFromCacheOrIndex(String url,
+			boolean isIndexed) {
+		String pageSourceContent = "";
+
+		if (isIndexed) {
+			pageSourceContent = this.sourceCodeOfURL;
+		} else {
+
+			// alreadychecked if it exists
+			int fileNumberInCache = cachedURLsFileNames.get(url);
+			try {
+				File file = new File(cacheMapDirectoryPath + fileNumberInCache
+						+ ".html");
+				FileReader fstream = new FileReader(file);
+				BufferedReader in = new BufferedReader(fstream);
+				String line = "";
+				while ((line = in.readLine()) != null) {
+					pageSourceContent = pageSourceContent + line;
+				}
+				in.close();
+				fstream.close();
+			} catch (Exception e) {// Catch exception if any
+				System.err.println("Error: " + e.getMessage());
+			}
+		}
+		return pageSourceContent;
+	}
+
+	public void closeCache() {
 		try {
 			this.out.close();
 			this.fstream.close();

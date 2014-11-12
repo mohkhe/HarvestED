@@ -288,16 +288,16 @@ public class CrawlerSellenium {
 										crawlingConfig.getOutputDataBase(),
 										detailedPagesbrowser);
 							} else if (!crawlingConfig.cache
-									.existsAlreadyInCache(resultLink)) {
+									.existsAlreadyInCacheOrIndex(resultLink, crawlingConfig.isIndexed())) {
 								detailedPagesbrowser.loadPage(resultLink);
 							}
 							if (crawlingConfig.feedbackBasedApproach == true) {
 								String pageContent = "";
 								String pageHTMLContent = "";
 								if (crawlingConfig.cache
-										.existsAlreadyInCache(resultLink)) {
+										.existsAlreadyInCacheOrIndex(resultLink, crawlingConfig.isIndexed())) {
 									pageContent = crawlingConfig.cache
-											.getPageTextContentFromCache(resultLink);
+											.getPageHTMLContentFromCacheOrIndex(resultLink, crawlingConfig.isIndexed);
 									/*
 									 * pageHTMLContent = crawlingConfig.cache
 									 * .getPageHTMLContentFromCache(resultLink);

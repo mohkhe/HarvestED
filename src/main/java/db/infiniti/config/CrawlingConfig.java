@@ -58,9 +58,9 @@ public class CrawlingConfig {
 
 	boolean firstQuery = true;
 	public String query;
-	public List<String> initialQuery = Arrays.asList("vitol"
-	// , "company"
-			);
+	public List<String> initialQuery;
+	
+
 	String initialQueryProcesses = "";
 
 	int querySelectionApproach;
@@ -97,7 +97,31 @@ public class CrawlingConfig {
 	public boolean unPauseCrawl = true;
 	public String crawlStatusPath;
 
+	IndexesConfig indexA;
+	IndexesConfig indexB;
 	public Cache cache;
+	
+	
+	public boolean isIndexed = false;
+	private IndexesConfig indexOld;
+	private IndexesConfig indexNew;
+	
+	public boolean isIndexed() {
+		return isIndexed;
+	}
+
+	public void setIndexed(boolean isIndexed) {
+		this.isIndexed = isIndexed;
+	}
+
+
+	public List<String> getInitialQuery() {
+		return initialQuery;
+	}
+
+	public void setInitialQuery(List<String> initialQuery) {
+		this.initialQuery = initialQuery;
+	}
 
 	public void Cache() {
 
@@ -107,11 +131,16 @@ public class CrawlingConfig {
 		return cache;
 	}
 
-	public void setCache(String cachePath) {
-		this.cache = new Cache();
-		cache.setCacheMapFilePath(cachePath);
-		cache.prepareCacheReadWrite();
-		cache.readCacheMap();
+	public void setCache(String cachePath, boolean isIndexed) {
+		if(!isIndexed){
+			this.cache = new Cache();
+			cache.setCacheMapFilePath(cachePath);
+			cache.prepareCacheReadWrite();
+			cache.readCacheMap();
+		}else if (isIndexed){
+			cache.indexOld = new IndexesConfig("index/pages");
+			cache.indexNew = new IndexesConfig("newindex/pages");
+		}
 	}
 
 	public int getSearchResultPageNumber() {
