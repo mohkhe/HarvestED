@@ -74,9 +74,10 @@ public class MainClass extends Thread {
 		crawlingConfig.setQuerySelectionApproach(crawlingConfig.combinedLFL_PLW);
 		//PredefinedlistOfWords - mostFreqFeedbackText - browsing - leastFromLast - leastFreqFeedbackText - combinedLFL_PLW
 		crawlingConfig.setQueries(queryPoolPath);
-		//crawlingConfig.setInitialQuery(Arrays.asList("vitol",//"company"));
-		crawlingConfig.setInitialQuery(Arrays.asList("brinksma"));
-		crawlingConfig.setIndexed(false);
+		//crawlingConfig.setInitialQuery(Arrays.asList("vitol"//,"company")
+         //       ));
+        crawlingConfig.setInitialQuery(Arrays.asList("brinksma"));
+        crawlingConfig.setIndexed(false);
 		
 		@SuppressWarnings("unused")
 		int totalNumOfWebsites = 0;

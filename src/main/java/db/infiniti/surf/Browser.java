@@ -50,37 +50,43 @@ public class Browser {
 	String pageText = "";
 
 	public void setDriver() {
-		org.openqa.selenium.firefox.FirefoxProfile profile = new FirefoxProfile();
-		profile.setPreference("dom.max_chrome_script_run_time", 0);
-		profile.setPreference("dom.max_script_run_time", 0);
-		profile.setPreference("webdriver.load.strategy", "fast");
-		profile.setPreference("network.http.connection-timeout", 2);
-		profile.setPreference("network.http.connection-retry-timeout", 1);
-		// gives error-illegalArgument
-		// profile.setPreference("dom.disable_open_during_load", true);
+        org.openqa.selenium.firefox.FirefoxProfile profile = new FirefoxProfile();
+        profile.setPreference("dom.max_chrome_script_run_time", 0);
+        profile.setPreference("dom.max_script_run_time", 0);
+        profile.setPreference("webdriver.load.strategy", "fast");
+        profile.setPreference("network.http.connection-timeout", 2);
+        profile.setPreference("network.http.connection-retry-timeout", 1);
+        // gives error-illegalArgument
+        // profile.setPreference("dom.disable_open_during_load", true);
+        profile.setPreference("browser.download.folderList", 2);
+        profile.setPreference("browser.download.dir", savePoPUPPath);
+        
+        //new
+        profile.setPreference("browser.pdfjs.disabled", true);
+        profile.setPreference("browser.plugin.scan.plid.all", false);
+        profile.setPreference("browser.plugin.scan.acrobat", "99.0");
+        
+        profile.setPreference("browser.download.manager.showWhenStarting",
+                false);
+        profile.setPreference(
+                "browser.helperApps.neverAsk.saveToDisk",
+                "application/octet-stream,,application/octet,application/pdf,application/x-pdf,application/vnd.ms-excel,"
+                        + "application/x-xpinstall,application/x-zip,application/x-zip-compressed,application/zip,"
+                        + "application/msword,text/plain,text/csv,"
+                        + "application/vnd.fdf, application/x-msdos-program, application/x-unknown-application-octet-stream, "
+                        + "application/vnd.ms-powerpoint, application/excel, "
+                        + "application/vnd.ms-publisher, application/x-unknown-message-rfc822, "
+                        + "application/msword, application/x-mspublisher, application/x-tar, "
+                        + "application/x-gzip,application/x-stuffit, application/vnd.ms-works, application/powerpoint, "
+                        + "application/rtf, application/postscript, application/x-gtar, video/quicktime, video/x-msvideo, "
+                        + "video/mpeg, audio/x-wav, audio/x-midi, audio/x-aiff");
 
-		profile.setPreference("browser.download.folderList", 2);
-		profile.setPreference("browser.download.manager.showWhenStarting",
-				false);
-		profile.setPreference("browser.download.dir", savePoPUPPath);
-
-		File file = new File(savePoPUPPath);
-		if (!file.exists()) {
-			file.mkdir();
-		}
-
-		profile.setPreference(
-				"browser.helperApps.neverAsk.saveToDisk",
-				"application/octet-stream,,application/octet,application/pdf,application/x-pdf,application/vnd.ms-excel,"
-						+ "application/x-xpinstall,application/x-zip,application/x-zip-compressed,application/zip,"
-						+ "application/msword,text/plain,text/csv,"
-						+ "application/vnd.fdf, application/x-msdos-program, application/x-unknown-application-octet-stream, "
-						+ "application/vnd.ms-powerpoint, application/excel, "
-						+ "application/vnd.ms-publisher, application/x-unknown-message-rfc822, "
-						+ "application/msword, application/x-mspublisher, application/x-tar, "
-						+ "application/x-gzip,application/x-stuffit, application/vnd.ms-works, application/powerpoint, "
-						+ "application/rtf, application/postscript, application/x-gtar, video/quicktime, video/x-msvideo, "
-						+ "video/mpeg, audio/x-wav, audio/x-midi, audio/x-aiff");
+        driver = new FirefoxDriver(profile);
+        // driver.manage().timeouts().implicitlyWait(2, TimeUnit.SECONDS);
+        driver.manage().timeouts()
+                .setScriptTimeout(timeOutPageScript, TimeUnit.SECONDS);
+        driver.manage().timeouts()
+                .pageLoadTimeout(timeOutPageScript, TimeUnit.SECONDS);
 
 		driver = new FirefoxDriver(profile);
 		// driver.manage().timeouts().implicitlyWait(2, TimeUnit.SECONDS);

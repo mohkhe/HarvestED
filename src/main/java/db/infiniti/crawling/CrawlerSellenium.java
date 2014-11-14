@@ -306,9 +306,9 @@ public class CrawlerSellenium {
 									pageHTMLContent = detailedPagesbrowser
 											.getPageSource(resultLink);
 									pageContent = detailedPagesbrowser.getPageText();//.getText();
-									crawlingConfig.cache.saveInCache(
-											resultLink, pageContent,
-											pageHTMLContent);
+									 crawlingConfig.cache.saveInCache(
+	                                            resultLink, pageContent,
+	                                            pageHTMLContent, crawlingConfig.isIndexed);
 								}
 								setTextHtmlOfLink(pageHTMLContent,
 										crawledLinkDS);// it

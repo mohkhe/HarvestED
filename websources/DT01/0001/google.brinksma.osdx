@@ -1,0 +1,7 @@
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/" xmlns:snipdex="http://www.snipdex.org/snipdex-opensearch/1.0/">
+   <ShortName>google.brinksma</ShortName>
+   <Description>google search engine</Description>
+   <Url type="text/html" pagetemplate="resultpage" address="https://www.google.com/search" template="https://www.google.com/search?num=100&amp;q={query}" item_xpath="//li[./div/h3/a]" link_xpath="//li/div/h3/a" desc_xpath="" title_xpath="" thumbn_xpath="" next_page_xp="//*[@id='pnnext']/span[2]" />
+</OpenSearchDescription>
+
+
