@@ -1,9 +1,0 @@
-<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/" xmlns:snipdex="http://www.snipdex.org/snipdex-opensearch/1.0/">
-   <ShortName>imes</ShortName>
-   <Description>online shopping website</Description>
-   <Url pagetemplate="resultpage" address="http://www.imes.be/" template="http://www.imes.be/is-bin/INTERSHOP.enfinity/WFS/Imes-Imes-Site/nl_BE/-/EUR/ViewFASProduct-Start?URLParam=fh_eds%3D%25c3%259f%26fh_maxdisplaynrvalues_merk%3D-1%26fh_refview%3Dlister%26fh_refpath%3Dfacet_4%26fh_reffacet%3Dcategories%26fh_location%3D%252f%252fimes%252fnl_BE%252fclients%253e%257bstandardimes%257d%252fcategories%253c%257bimes_supercat_1%257d%252fcategories%253c%257bimes_supercat_1_supercat_1_1%257d%252fcategories%253c%257bimes_supercat_1_supercat_1_1_supercat_1_1_1%257d&SelectedCat=cat1" item_xpath="//td/table//tr/td[.//h1/a]" link_xpath="//td/table//tr/td[.//h1/a]" desc_xpath="//td/table//tr/td[.//h1/a]" title_xpath="//td/table//tr/td[.//h1/a]" thumbn_xpath="//td/table//tr/td[.//h1/a]"/>
-   <Url pagetemplate="datapage" xpath1="" xpath2="" xpath3=""/>
-   <Url pagetemplate="datapage2" xpath1="" xpath2="" xpath3=""/>
-</OpenSearchDescription>
-
-

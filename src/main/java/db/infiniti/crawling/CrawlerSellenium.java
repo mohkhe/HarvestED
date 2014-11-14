@@ -385,8 +385,8 @@ public class CrawlerSellenium {
 			}
 			firstRunForWebsite = false;
 			if (this.nextResultPagexPath == null) {
-				if (siteDes.getNextPageXP() != null) {
-					this.nextResultPagexPath = siteDes.getNextPageXP();
+				if (siteDes.getNext_page_xp() != null) {
+					this.nextResultPagexPath = siteDes.getNext_page_xp();
 				} else {
 					detectNextButtonXpath();
 				}

@@ -33,7 +33,7 @@ public class MainClass extends Thread {
 		}else{
 			dataModelTable = "dsItemsModelXPATH";
 			dataOutputTable = "dsItemsOutputMohtry";
-			numberOfSelectedSourceEngineIDtoCrawl = 21;
+			numberOfSelectedSourceEngineIDtoCrawl = 0;//21;
 			numberOfBrowsers = 5;
 		}
 		
@@ -49,7 +49,7 @@ public class MainClass extends Thread {
 		String openDescFileDirPath = "websources/DT01/";
 		// not needed if reading from DB
 		// /home/mohammad/uni-work/DJOERD SOURCES/DT01/
-		boolean readFromDB = true; // read from openFIleDS or DB
+		boolean readFromDB = false; // read from openFIleDS or DB
 
 		// DetailedInfoXPathDetectionDS detailedInfoXpathDetector;
 

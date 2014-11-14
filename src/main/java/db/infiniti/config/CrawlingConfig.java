@@ -263,8 +263,9 @@ public class CrawlingConfig {
 		File file = new File(openDescFilePath);
 		if (file.isDirectory()) {
 			String[] list = file.list();
+
 			if (list.length > 1) {// to remove effect of .svn
-				collectionName = list[1];
+				collectionName = list[0];
 			} else {
 				collectionName = list[0];
 			}

@@ -17,13 +17,35 @@ public class WebsiteDS {
 	String next_page_xp;
 	boolean acceptsStopWords;
 
-	public WebsiteDS(int engineid, String name, String description, String address, String template, String itemXPath, String linkXPath,	String descXPath, String titleXPath,
+	public WebsiteDS(int engineid, String name, String description,
+			String address, String status, String template, String comments,
+			String itemXPath, String linkXPath, String descXPath,
+			String titleXPath, String thumbNXPath, String next_page_xp,
+			boolean acceptsStopWords) {
+		super();
+		this.engineid = engineid;
+		this.name = name;
+		Description = description;
+		Address = address;
+		this.status = status;
+		this.template = template;
+		this.comments = comments;
+		this.itemXPath = itemXPath;
+		this.linkXPath = linkXPath;
+		this.descXPath = descXPath;
+		this.titleXPath = titleXPath;
+		this.thumbNXPath = thumbNXPath;
+		this.next_page_xp = next_page_xp;
+		this.acceptsStopWords = acceptsStopWords;
+	}
+
+/*	public WebsiteDS(int engineid, String name, String description, String address, String template, String itemXPath, String linkXPath,	String descXPath, String titleXPath,
 	String thumbNXPath) {
 		super();
-/*		Address = address;
+		Address = address;
 		this.itemXPath = itemXPath;
-		Description = description;*/
-	}
+		Description = description;
+	}*/
 
 	public WebsiteDS() {
 		super();
@@ -93,6 +115,14 @@ public class WebsiteDS {
 		this.thumbNXPath = thumbNXPath;
 	}
 
+	public String getNext_page_xp() {
+		return next_page_xp;
+	}
+
+	public void setNext_page_xp(String next_page_xp) {
+		this.next_page_xp = next_page_xp;
+	}
+	
 	public int getEngineid() {
 		return engineid;
 	}
@@ -124,13 +154,7 @@ public class WebsiteDS {
 	public void setComments(String comments) {
 		this.comments = comments;
 	}
-	public String getNextPageXP() {
-		return this.next_page_xp;
-	}
-
-	public void setNextPageXP(String Next_Page_XP) {
-		this.next_page_xp = Next_Page_XP;
-	}
+	
 	public boolean isAcceptsStopWords() {
 		return acceptsStopWords;
 	}

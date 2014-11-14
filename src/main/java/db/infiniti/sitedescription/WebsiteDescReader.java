@@ -82,7 +82,7 @@ public class WebsiteDescReader {
 				siteDes.setThumbNXPath(rs.getString("thumb_xp"));
 				siteDes.setStatus(rs.getString("status"));
 				String temp = rs.getString("next_page_xp");
-				siteDes.setNextPageXP(this.refineString(temp));
+				siteDes.setNext_page_xp(this.refineString(temp));
 				listOfWebsites.add(siteDes);
 				//String status = rs.getString("status");
 				++count;
@@ -186,9 +186,10 @@ public class WebsiteDescReader {
 		 * String itemXPath, String linkXPath, String descXPath, String
 		 * titleXPath, String thumbNXPath
 		 */
-		siteDes = new WebsiteDS(index, "name", "Description", "adress", "template",
+		boolean acceptsStopWords = false; 
+		siteDes = new WebsiteDS(index, "name", "Description", "adress", "status","template", "comments",
 				"itemXPath", "linkXPath", "descXPath", "titleXPath",
-				"thumbNXPath");
+				"thumbNXPath", "next_page_xp", acceptsStopWords);
 		// fileAddress =
 		// "/home/mohammad/uni-work/almer/simpledex/sources/djoerdhiemstra.osdx";
 		try {
@@ -238,6 +239,14 @@ public class WebsiteDescReader {
 						siteDes.setThumbNXPath(nNode.getAttributes()
 								.getNamedItem("thumbn_xpath").getTextContent());
 					}
+					if(nNode.getAttributes().getNamedItem("next_page_xp")!=null){
+						siteDes.setNext_page_xp(nNode.getAttributes()
+								.getNamedItem("next_page_xp").getTextContent());
+					}
+				/*	if(nNode.getAttributes().getNamedItem("acceptsStopWords")!=null){
+						siteDes.setThumbNXPath(nNode.getAttributes()
+								.getNamedItem("acceptsStopWords").getTextContent());
+					}*/
 				}
 
 			}
