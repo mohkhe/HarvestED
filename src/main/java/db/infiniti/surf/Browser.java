@@ -88,12 +88,6 @@ public class Browser {
         driver.manage().timeouts()
                 .pageLoadTimeout(timeOutPageScript, TimeUnit.SECONDS);
 
-		driver = new FirefoxDriver(profile);
-		// driver.manage().timeouts().implicitlyWait(2, TimeUnit.SECONDS);
-		driver.manage().timeouts()
-				.setScriptTimeout(timeOutPageScript, TimeUnit.SECONDS);
-		driver.manage().timeouts()
-				.pageLoadTimeout(timeOutPageScript, TimeUnit.SECONDS);
 		/*
 		 * String adblockfile =
 		 * "/Users/username/Downloads/adblock_plus-2.4-tb+fx+an+sm.xpi";

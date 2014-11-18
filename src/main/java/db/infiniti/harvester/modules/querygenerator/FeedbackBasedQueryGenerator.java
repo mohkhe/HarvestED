@@ -10,6 +10,7 @@ import java.util.Set;
 
 import db.infiniti.config.QueryStatisticDS;
 import db.infiniti.config.TextEditor;
+import db.infiniti.harvester.modules.common.Cache;
 
 public class FeedbackBasedQueryGenerator {
 
@@ -116,24 +117,41 @@ public class FeedbackBasedQueryGenerator {
 	}
 
 	public String setNextQueryIn_Feedback_ClueWeb(List<String> initialQuery,
-			Set<String> queryArray, HashMap<String, Integer> termFreqInClueWeb2) {
+			Set<String> queryArray, HashMap<String, Integer> termFreqInClueWeb2, boolean isIndexed, Cache cache) {
 
 		Iterator<String> termInClueWeb = termFreqInClueWeb2.keySet().iterator();
 		// TODO check if this is the most frequent and not the least frequent
 		while (termInClueWeb.hasNext()) {
 			String term = termInClueWeb.next();
-			if (!initialQuery.contains(term)
-					&& !this.generalTermFreqSet.contains(term)
-					&& !sentQueries.contains(term)) {
-				sentQueries.add(term.intern());
-				sentQueries.trimToSize();
-				QueryStatisticDS queryStat = new QueryStatisticDS(term);
-				// queryStat.setFreqInAllReturnedDocsForQuery(querySet.get(term));
-				queryStat.setDocumentsQueryAppearedIn(termDocumentDistribution
-						.get(term));
-				queriesStatMap.put(term.intern(), queryStat);
-
-				return term;
+			if(isIndexed){
+				if (!initialQuery.contains(term)
+						&& !cache.contains(term)
+						&& !sentQueries.contains(term)) {
+					sentQueries.add(term.intern());
+					sentQueries.trimToSize();
+					/*QueryStatisticDS queryStat = new QueryStatisticDS(term);
+					// queryStat.setFreqInAllReturnedDocsForQuery(querySet.get(term));
+					queryStat.setDocumentsQueryAppearedIn(termDocumentDistribution
+							.get(term));
+					queriesStatMap.put(term.intern(), queryStat);*/
+	
+					return term;
+				}
+			}else{
+			
+				if (!initialQuery.contains(term)
+						&& !this.generalTermFreqSet.contains(term)
+						&& !sentQueries.contains(term)) {
+					sentQueries.add(term.intern());
+					sentQueries.trimToSize();
+					QueryStatisticDS queryStat = new QueryStatisticDS(term);
+					// queryStat.setFreqInAllReturnedDocsForQuery(querySet.get(term));
+					queryStat.setDocumentsQueryAppearedIn(termDocumentDistribution
+							.get(term));
+					queriesStatMap.put(term.intern(), queryStat);
+	
+					return term;
+				}
 			}
 		}
 

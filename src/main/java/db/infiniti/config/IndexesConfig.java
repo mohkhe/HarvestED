@@ -37,17 +37,17 @@ import org.apache.lucene.store.NativeFSLockFactory;
 
 public class IndexesConfig {
 	ArrayList<String> listURLsNotDownloadedButInCache = new ArrayList<String>();
-	static Directory indexDirectory;
+	public Directory indexDirectory;
 	// public String indexDirectoryPath = "";
 
-	static StandardAnalyzer analyzer = new StandardAnalyzer();
-	static IndexWriter w;
+	public StandardAnalyzer analyzer = new StandardAnalyzer();
+	public IndexWriter w;
 	public HashMap<String, String> urlsFileNames;
 	public HashMap<String, String> emptyFiles;
 	public String textOfURL = "";
 	public String sourceCodeOfURL = "";
 	public int docId = 0;
-
+	public String indexName = "";
 
 	// CorruptIndexException, LockObtainFailedException, IOException,
 	// ParseException
@@ -55,6 +55,7 @@ public class IndexesConfig {
 		// create some index
 		// we could also create an index in our ram ...
 		// Directory index = new RAMDirectory();
+		indexName = indexDirectoryPath;
 		try {
 			indexDirectory = FSDirectory.getDirectory(indexDirectoryPath);// "index/pages"
 			indexDirectory.setLockFactory(new NativeFSLockFactory(
@@ -82,7 +83,7 @@ public class IndexesConfig {
 		String url = "";
 		if (url != null) {
 			try {
-				if (searchIndex(url)) {
+				if (searchIndex(url, "url")) {
 					String htmlCode = textOfURL;
 					String textFromHtml = sourceCodeOfURL;
 				
@@ -144,7 +145,7 @@ public class IndexesConfig {
 		return htmlCode;
 	}
 
-	public static void closeindex() {
+	public void closeindex() {
 		try {
 			w.close();
 		} catch (IOException e) {
@@ -162,6 +163,7 @@ public class IndexesConfig {
 				Field.TermVector.YES));
 		doc.add(new Field("html", htmlCode, Field.Store.YES,
 				Field.Index.NOT_ANALYZED));
+		//TODO change for other queries
 		doc.add(new Field("query", "vitol", Field.Store.YES,
 				Field.Index.NOT_ANALYZED));
 		try {
@@ -177,7 +179,7 @@ public class IndexesConfig {
 		System.out.println("index generated");
 	}
 
-	public boolean searchIndex(String searchString) throws IOException,
+	public boolean searchIndex(String searchString, String termString) throws IOException,
 			ParseException {
 		System.out.println("Searching for '" + searchString + "'");
 		// Directory directory = FSDirectory.getDirectory();
@@ -185,7 +187,7 @@ public class IndexesConfig {
 		IndexSearcher indexSearcher = new IndexSearcher(indexReader);
 		int n = w.numDocs();
 
-		Term term = new Term("url", searchString);
+		Term term = new Term(termString, searchString);
 		TermQuery query = new TermQuery(term);
 		TopDocs topDocs = indexSearcher.search(query, 10);
 

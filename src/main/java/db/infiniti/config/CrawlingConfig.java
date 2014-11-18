@@ -100,11 +100,22 @@ public class CrawlingConfig {
 	IndexesConfig indexA;
 	IndexesConfig indexB;
 	public Cache cache;
+	boolean have_words_in_memory = false;
 	
 	
 	public boolean isIndexed = false;
 	private IndexesConfig indexOld;
 	private IndexesConfig indexNew;
+	
+	
+	public boolean isHave_words_in_memory() {
+		return have_words_in_memory;
+	}
+
+	public void setHave_words_in_memory(boolean have_words_in_memory) {
+		this.have_words_in_memory = have_words_in_memory;
+	}
+
 	
 	public boolean isIndexed() {
 		return isIndexed;
@@ -132,14 +143,15 @@ public class CrawlingConfig {
 	}
 
 	public void setCache(String cachePath, boolean isIndexed) {
+		this.cache = new Cache();
 		if(!isIndexed){
-			this.cache = new Cache();
 			cache.setCacheMapFilePath(cachePath);
 			cache.prepareCacheReadWrite();
 			cache.readCacheMap();
 		}else if (isIndexed){
-			cache.indexOld = new IndexesConfig("index/pages");
-			cache.indexNew = new IndexesConfig("newindex/pages");
+			cache.setIndexNew();// = new IndexesConfig("newindex/pages");
+			cache.setIndexOld();// = new IndexesConfig("index/pages");
+
 		}
 	}
 
@@ -598,8 +610,8 @@ public class CrawlingConfig {
 				for (String part : initialQuery) {
 					// initialQueryProcesses = initialQueryProcesses + "+\"" +
 					// part+ "\"";
-					initialQueryProcesses = initialQueryProcesses + "+" + part
-							+ "";
+					initialQueryProcesses = initialQueryProcesses + "+\""
+							+ part + "\"";
 
 				}
 				initialQueryProcesses = initialQueryProcesses.replaceFirst(
@@ -610,12 +622,12 @@ public class CrawlingConfig {
 				firstQuery = false;
 			} else {
 				query = fbBasedQueryGenerator.setNextQueryIn_Feedback_ClueWeb(
-						initialQuery, queryArray, this.termFreqInClueWeb);
+						initialQuery, queryArray, this.termFreqInClueWeb, this.isIndexed, this.cache);
 				if (query != null) {
 					sentQueries.add(query.intern());
 					querySet.put(query.intern(), 0);
-					// query = initialQueryProcesses + "+\"" + query + "\"";
-					query = initialQueryProcesses + "+" + query + "";
+					query = initialQueryProcesses + "+\"" + query + "\"";
+					//query = initialQueryProcesses + "+" + query + "";
 
 				} else {
 					return null;

@@ -33,8 +33,8 @@ public class MainClass extends Thread {
 		}else{
 			dataModelTable = "dsItemsModelXPATH";
 			dataOutputTable = "dsItemsOutputMohtry";
-			numberOfSelectedSourceEngineIDtoCrawl = 0;//21;
-			numberOfBrowsers = 5;
+			numberOfSelectedSourceEngineIDtoCrawl = 21;//0;
+			numberOfBrowsers = 2;
 		}
 		
 		ArrayList<String> listOfReturnedResults = new ArrayList<String>();
@@ -49,7 +49,7 @@ public class MainClass extends Thread {
 		String openDescFileDirPath = "websources/DT01/";
 		// not needed if reading from DB
 		// /home/mohammad/uni-work/DJOERD SOURCES/DT01/
-		boolean readFromDB = false; // read from openFIleDS or DB
+		boolean readFromDB = true; // read from openFIleDS or DB
 
 		// DetailedInfoXPathDetectionDS detailedInfoXpathDetector;
 
@@ -74,12 +74,13 @@ public class MainClass extends Thread {
 		crawlingConfig.setQuerySelectionApproach(crawlingConfig.combinedLFL_PLW);
 		//PredefinedlistOfWords - mostFreqFeedbackText - browsing - leastFromLast - leastFreqFeedbackText - combinedLFL_PLW
 		crawlingConfig.setQueries(queryPoolPath);
-		//crawlingConfig.setInitialQuery(Arrays.asList("vitol"//,"company")
+		//crawlingConfig.setInitialQuery(Arrays.asList("brinksma"//,"company")
          //       ));
-        crawlingConfig.setInitialQuery(Arrays.asList("brinksma"));
-        crawlingConfig.setIndexed(false);
+        crawlingConfig.setInitialQuery(Arrays.asList("vitol"));
+        crawlingConfig.setIndexed(true);
+        crawlingConfig.setHave_words_in_memory(false);
 		
-		@SuppressWarnings("unused")
+        @SuppressWarnings("unused")
 		int totalNumOfWebsites = 0;
 		if (!readFromDB) {// read from openFIleDS or DB
 			crawlingConfig.setOpenDescDirPath(openDescFileDirPath);
@@ -107,9 +108,9 @@ public class MainClass extends Thread {
 			} else {
 				crawlingConfig.setCurrentSiteDescription(readFromDB,
 						numberOfCrawledSources);
-			/*	crawlingConfig.setCollectionName(crawlingConfig
-						.getCurrentSiteDescription().getName());*/
-				crawlingConfig.setCollectionName("google.com.brinksma");
+				crawlingConfig.setCollectionName(crawlingConfig
+						.getCurrentSiteDescription().getName());
+				//crawlingConfig.setCollectionName("google.com.brinksma");
 			}
 		//	crawlingConfig.setWebTools(new WebTools());// to extract pages and
 														// the content

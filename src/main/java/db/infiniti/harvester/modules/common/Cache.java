@@ -130,14 +130,14 @@ public class Cache {
 	public boolean existsAlreadyInCacheOrIndex(String url, boolean isIndexed) {
         if (isIndexed) {
             try {
-                if (indexOld.searchIndex(url)) {
+                if (indexOld.searchIndex(url, "url")) {
                     textOfURL = indexOld.textOfURL;
                     sourceCodeOfURL = indexOld.sourceCodeOfURL;
-                    if (!indexNew.searchIndex(url)) {
+                    if (!indexNew.searchIndex(url, "url")) {
                         indexNew.index(url, textOfURL, sourceCodeOfURL);
                     }
                     return true;
-                } else if (indexNew.searchIndex(url)) {
+                } else if (indexNew.searchIndex(url, "url")) {
                     textOfURL = indexOld.textOfURL;
                     sourceCodeOfURL = indexOld.sourceCodeOfURL;
                     return true;
@@ -231,5 +231,34 @@ public class Cache {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 		}
+	}
+
+	public boolean contains(String term) {
+		// TODO Auto-generated method stub
+		try {
+			if(this.indexNew.searchIndex(term, "text")){
+				return true;
+			}
+			else{
+				return false;
+
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return false;
+	}
+
+	public void setIndexOld() {
+		indexOld = new IndexesConfig("index/pages");
+	}
+
+	public void setIndexNew() {
+		indexNew = new IndexesConfig("newindex/pages");		
+		
 	}
 }

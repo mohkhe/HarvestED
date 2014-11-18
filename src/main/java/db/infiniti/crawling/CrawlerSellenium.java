@@ -109,6 +109,7 @@ public class CrawlerSellenium {
 	boolean stopCrawlForQuery = false;
 	boolean dataModelLoaded = false;
 
+	static int numberOfProcessedLinks = 0; 
 	// to extract data from detailedpages
 
 	public CrawlerSellenium(CrawlingConfig crawlingConfig,
@@ -216,9 +217,36 @@ public class CrawlerSellenium {
 			}
 			crawlingConfig.setSearchResultPageNumber(noOfReturnedResultsPages);
 
-			if (crawlingConfig.getQuerySelectionApproach() == crawlingConfig.mostFreqFeedbackText) {
+			if (crawlingConfig.getQuerySelectionApproach() == crawlingConfig.mostFreqFeedbackText){
+				String pageContent= "";
+				String pageHTMLContent = "";
 				// the search result page content also included
-				crawlingConfig.updateQueryList(sRPagesbrowser.getPageText());
+			/*	if (crawlingConfig.cache
+						.existsAlreadyInCacheOrIndex(searchResultlink, crawlingConfig.isIndexed())) {
+					pageContent = crawlingConfig.cache
+							.getPageHTMLContentFromCacheOrIndex(searchResultlink, crawlingConfig.isIndexed);
+					
+					 * pageHTMLContent = crawlingConfig.cache
+					 * .getPageHTMLContentFromCache(resultLink);
+					 
+				}else{
+					pageHTMLContent = sRPagesbrowser
+							.getPageSource(searchResultlink);
+					pageContent = sRPagesbrowser.getPageText();//.getText();
+					 crawlingConfig.cache.saveInCache(
+							 searchResultlink, pageContent,
+							 pageHTMLContent, crawlingConfig.isIndexed);
+				}*/
+				if(crawlingConfig.isIndexed()){
+					pageHTMLContent = sRPagesbrowser
+							.getPageSource(searchResultlink);
+					pageContent = sRPagesbrowser.getPageText();//.getText();
+					 crawlingConfig.cache.saveInCache(
+							 searchResultlink, pageContent,
+							 pageHTMLContent, crawlingConfig.isIndexed);
+				}else if(crawlingConfig.isHave_words_in_memory()){
+					crawlingConfig.updateQueryList(sRPagesbrowser.getPageText());
+				}
 			}
 
 			// crawlingConfig.updateQueryList(sRPagesbrowser.getPageText());
@@ -245,8 +273,10 @@ public class CrawlerSellenium {
 					}
 				}
 			}
-
+			numberOfProcessedLinks = 0;
 			for (CrawledLinkDS crawledLinkDS : listOfLinksDetailedPages) {
+				
+				boolean docIsIndexed = false;
 				increaseReturnedResForQueryNumber();// totalreturnedResForQuery
 				String resultLink = crawledLinkDS.getLink();
 				crawledLinkDS
@@ -287,22 +317,25 @@ public class CrawlerSellenium {
 								extractFromDetailedPages(
 										crawlingConfig.getOutputDataBase(),
 										detailedPagesbrowser);
-							} else if (!crawlingConfig.cache
+							}/* else if (!crawlingConfig.cache
 									.existsAlreadyInCacheOrIndex(resultLink, crawlingConfig.isIndexed())) {
 								detailedPagesbrowser.loadPage(resultLink);
-							}
+							}*/
 							if (crawlingConfig.feedbackBasedApproach == true) {
 								String pageContent = "";
 								String pageHTMLContent = "";
 								if (crawlingConfig.cache
 										.existsAlreadyInCacheOrIndex(resultLink, crawlingConfig.isIndexed())) {
-									pageContent = crawlingConfig.cache
+									pageHTMLContent = crawlingConfig.cache
 											.getPageHTMLContentFromCacheOrIndex(resultLink, crawlingConfig.isIndexed);
+									pageContent = crawlingConfig.cache
+											.getPageTextContentFromCache(resultLink, crawlingConfig.isIndexed);
 									/*
 									 * pageHTMLContent = crawlingConfig.cache
 									 * .getPageHTMLContentFromCache(resultLink);
 									 */
 								} else {
+									detailedPagesbrowser.loadPage(resultLink);
 									pageHTMLContent = detailedPagesbrowser
 											.getPageSource(resultLink);
 									pageContent = detailedPagesbrowser.getPageText();//.getText();
@@ -313,14 +346,16 @@ public class CrawlerSellenium {
 								setTextHtmlOfLink(pageHTMLContent,
 										crawledLinkDS);// it
 								crawledLinkDS.setLinkTextContent(pageContent);
-								crawlingConfig.updateQueryList(crawledLinkDS
-										.getLinkTextContent());
-								crawlingConfig.fbBasedQueryGenerator
-										.prepareQuerySelection(
-												crawledLinkDS
-														.getNumberOfDocInReturnedResults(),
-												crawledLinkDS
-														.getLinkTextContent());
+								if(crawlingConfig.isHave_words_in_memory()){
+									crawlingConfig.updateQueryList(crawledLinkDS
+											.getLinkTextContent());
+									crawlingConfig.fbBasedQueryGenerator
+											.prepareQuerySelection(
+													crawledLinkDS
+															.getNumberOfDocInReturnedResults(),
+													crawledLinkDS
+															.getLinkTextContent());								}
+								
 							}
 
 							if (!listOfReturnedResultsPerQuery
@@ -329,7 +364,7 @@ public class CrawlerSellenium {
 							} else {
 								crawlReport.incNoRepeatedLinks();
 							}
-							addToXmlDocumentItem(crawledLinkDS, doc);
+							//addToXmlDocumentItem(crawledLinkDS, doc);
 
 							if (crawlingConfig.SaveDSextractedInfoInFile == true) {
 								saveExtractedInfoOfLink(crawledLinkDS,
@@ -339,6 +374,8 @@ public class CrawlerSellenium {
 							crawlingConfig.saveCrawlStatus(crawledLinkDS
 									.getLink());
 							crawlingConfig.freeBrowser(detailedPagesbrowser);
+							numberOfProcessedLinks++;
+
 						}
 
 						private CrawledLinkDS getTheRelatedDS(
@@ -352,7 +389,6 @@ public class CrawlerSellenium {
 							}
 							return null;
 						}
-
 					}, resultLink);
 					seperatedBrowser.start();
 				} else if (listOfAllReturnedResults.contains(resultLink)) {
@@ -360,6 +396,8 @@ public class CrawlerSellenium {
 					crawlReport.incNumRepeatedLinksInGeneral();
 					crawledLinkDS.setRepeated("Yes");
 					// in total
+					numberOfProcessedLinks++;
+
 				}
 
 				// if ((listOfAllReturnedResults.size()) >= 4000) {//total
@@ -371,7 +409,9 @@ public class CrawlerSellenium {
 					break;// check. if not work
 				}
 			}
-
+			while(numberOfProcessedLinks < listOfLinksDetailedPages.size()){
+				;
+			}
 			crawlingConfig.waitTillAllBrowsersAreFree();
 			if (posedQueiesIndex > 200) {
 				continueCrawl = false;
