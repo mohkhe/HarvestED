@@ -92,7 +92,7 @@ public class Cache {
 	public void saveInCache(String URL, String pageContent, String pageHTML,
             boolean isIndexed) {
         if (isIndexed) {
-            if(!pageContent.equals("") && pageContent.equalsIgnoreCase("error")){
+            if((!pageContent.equals("")) || pageContent.equalsIgnoreCase("error")){
                 indexNew.index(URL, pageContent, pageHTML);
             }else{
                 System.out.println("Empty text or error in extracting "+URL);
