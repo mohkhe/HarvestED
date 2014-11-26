@@ -36,7 +36,7 @@ public class Browser {
 	String sourceText = "";
 	String driverURL = "";
 	List<WebElement> qResS = null;
-	int timeOutThread = 4000; // milisecond
+	int timeOutThread = 40000; // milisecond
 	int timeOutPageScript = 3; // seconds
 	String collectionName = "";
 	String savePoPUPPath = "";
@@ -641,6 +641,22 @@ public class Browser {
 		return text = pageText;
 	}
 
+	
+	public String getPageTextFromHTML(String HTMlCode){
+		TextFromHtml extractor = new TextFromHtml();
+		String text = "";
+		try{
+			text =  extractor.extractTextFromHtml(HTMlCode);
+		} catch (Exception e) {// Catch exception if any
+			text = getPageText();
+		} catch(java.lang.OutOfMemoryError error){
+			text = getPageText();
+		}catch(java.lang.StackOverflowError e){
+			text = getPageText();
+		}
+		return text;
+	}
+	
 	public String getPageText() {
 
 		long time = System.currentTimeMillis();

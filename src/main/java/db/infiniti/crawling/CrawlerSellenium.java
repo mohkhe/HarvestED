@@ -11,6 +11,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.imageio.ImageIO;
 import javax.xml.parsers.DocumentBuilder;
@@ -240,7 +241,8 @@ public class CrawlerSellenium {
 				if(crawlingConfig.isIndexed()){
 					pageHTMLContent = sRPagesbrowser
 							.getPageSource(searchResultlink);
-					pageContent = sRPagesbrowser.getPageText();//.getText();
+					pageContent = sRPagesbrowser.getPageTextFromHTML(pageHTMLContent);
+					//pageContent = sRPagesbrowser.getPageText();//.getText();
 					 crawlingConfig.cache.saveInCache(
 							 searchResultlink, pageContent,
 							 pageHTMLContent, crawlingConfig.isIndexed);
@@ -338,7 +340,8 @@ public class CrawlerSellenium {
 									detailedPagesbrowser.loadPage(resultLink);
 									pageHTMLContent = detailedPagesbrowser
 											.getPageSource(resultLink);
-									pageContent = detailedPagesbrowser.getPageText();//.getText();
+									pageContent = detailedPagesbrowser.getPageTextFromHTML(pageHTMLContent);
+									//pageContent = detailedPagesbrowser.getPageText();//.getText();
 									 crawlingConfig.cache.saveInCache(
 	                                            resultLink, pageContent,
 	                                            pageHTMLContent, crawlingConfig.isIndexed);
@@ -374,7 +377,8 @@ public class CrawlerSellenium {
 							crawlingConfig.saveCrawlStatus(crawledLinkDS
 									.getLink());
 							crawlingConfig.freeBrowser(detailedPagesbrowser);
-							numberOfProcessedLinks++;
+							//numberOfProcessedLinks++;
+							incrementNumberOfProcessedLinks();
 
 						}
 
@@ -396,7 +400,10 @@ public class CrawlerSellenium {
 					crawlReport.incNumRepeatedLinksInGeneral();
 					crawledLinkDS.setRepeated("Yes");
 					// in total
-					numberOfProcessedLinks++;
+					incrementNumberOfProcessedLinks();
+
+				}else{
+					incrementNumberOfProcessedLinks();
 
 				}
 
@@ -409,15 +416,20 @@ public class CrawlerSellenium {
 					break;// check. if not work
 				}
 			}
-			while(numberOfProcessedLinks < listOfLinksDetailedPages.size()){
-				;
+			while(numberOfProcessedLinks < numberOfDocInReturnedResults	&& numberOfProcessedLinks < (numberOfDocInReturnedResults-1)){//listOfLinksDetailedPages.size()
+				//TODO investigate why this happens
+				try {
+				    TimeUnit.SECONDS.sleep(3);
+				} catch (InterruptedException e) {
+				    //Handle exception
+				}
 			}
 			crawlingConfig.waitTillAllBrowsersAreFree();
-			if (posedQueiesIndex > 200) {
+			if (posedQueiesIndex > 300) {
 				continueCrawl = false;
 				stopCrawlForQuery = true;
 			}
-			if (totalreturnedRes >= 40000) {
+			if (totalreturnedRes >= 400000) {
 				// number (listOfAllReturnedResults.size())
 				// results for one query
 				continueCrawl = false;
@@ -507,7 +519,7 @@ public class CrawlerSellenium {
 
 		crawlingConfig.printQueryStatistics();
 		crawlingConfig.saveCrawlStatusCollectionName();
-		saveCrawledResultInXML(doc);
+	//	saveCrawledResultInXML(doc);
 		printQueriesResults("crawledData/" + crawlingConfig.getCollectionName()
 				+ "/results.xls");
 
@@ -528,6 +540,10 @@ public class CrawlerSellenium {
 		return size;
 	}
 
+	public synchronized void incrementNumberOfProcessedLinks() {
+        this.numberOfProcessedLinks++;
+    }
+	
 	private void increaseReturnedResForQueryNumber() {
 		synchronized (totalreturnedResForQueryList) {
 			totalreturnedResForQuery = totalreturnedResForQuery + 1;
@@ -764,6 +780,10 @@ public class CrawlerSellenium {
 
 			} catch (UnknownServerException we) {
 
+			}catch(org.openqa.selenium.NoSuchWindowException ee){
+				
+			}catch(org.openqa.selenium.remote.UnreachableBrowserException ee){
+				
 			}
 			return result;
 		}
@@ -782,6 +802,10 @@ public class CrawlerSellenium {
 
 		} catch (UnknownServerException ew) {
 
+		}catch(org.openqa.selenium.NoSuchWindowException ee){
+			
+		}catch(org.openqa.selenium.remote.UnreachableBrowserException ee){
+			
 		}
 
 		if (links == null) {
@@ -793,6 +817,10 @@ public class CrawlerSellenium {
 
 			} catch (UnknownServerException we) {
 
+			}catch(org.openqa.selenium.NoSuchWindowException ee){
+				
+			}catch(org.openqa.selenium.remote.UnreachableBrowserException ee){
+				
 			}
 		}
 		return result;
@@ -851,6 +879,10 @@ public class CrawlerSellenium {
 
 			} catch (UnknownServerException we) {
 
+			}catch(org.openqa.selenium.NoSuchWindowException ee){
+				
+			}catch(org.openqa.selenium.remote.UnreachableBrowserException ee){
+				
 			}
 
 			if (result.contains(crawledLinkDS.getTitle())) {
@@ -876,6 +908,10 @@ public class CrawlerSellenium {
 
 			} catch (UnknownServerException ew) {
 
+			}catch(org.openqa.selenium.NoSuchWindowException ee){
+				
+			}catch(org.openqa.selenium.remote.UnreachableBrowserException ee){
+				
 			}
 
 			if (links == null) {
@@ -889,6 +925,10 @@ public class CrawlerSellenium {
 
 				} catch (UnknownServerException we) {
 
+				}catch(org.openqa.selenium.NoSuchWindowException ee){
+					
+				}catch(org.openqa.selenium.remote.UnreachableBrowserException ee){
+					
 				}
 			}
 		}
@@ -982,6 +1022,10 @@ public class CrawlerSellenium {
 
 					} catch (UnknownServerException we) {
 
+					}catch(org.openqa.selenium.NoSuchWindowException ee){
+						
+					}catch(org.openqa.selenium.remote.UnreachableBrowserException ee){
+						
 					}
 					url = "javascript clicked.";
 				}
@@ -1159,6 +1203,10 @@ public class CrawlerSellenium {
 
 		} catch (UnknownServerException ew) {
 
+		} catch(org.openqa.selenium.NoSuchWindowException ee){
+			
+		}catch(org.openqa.selenium.remote.UnreachableBrowserException ee){
+			
 		}
 
 		if (links == null) {
@@ -1183,6 +1231,10 @@ public class CrawlerSellenium {
 
 				} catch (UnknownServerException er) {
 
+				} catch(org.openqa.selenium.NoSuchWindowException ee){
+					
+				}catch(org.openqa.selenium.remote.UnreachableBrowserException ee){
+					
 				}
 			}
 		}

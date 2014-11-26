@@ -34,7 +34,7 @@ public class MainClass extends Thread {
 			dataModelTable = "dsItemsModelXPATH";
 			dataOutputTable = "dsItemsOutputMohtry";
 			numberOfSelectedSourceEngineIDtoCrawl = 21;//0;
-			numberOfBrowsers = 2;
+			numberOfBrowsers = 6;
 		}
 		
 		ArrayList<String> listOfReturnedResults = new ArrayList<String>();

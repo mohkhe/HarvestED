@@ -125,7 +125,7 @@ public class FeedbackBasedQueryGenerator {
 			String term = termInClueWeb.next();
 			if(isIndexed){
 				if (!initialQuery.contains(term)
-						&& !cache.contains(term)
+						&& cache.contains(term)
 						&& !sentQueries.contains(term)) {
 					sentQueries.add(term.intern());
 					sentQueries.trimToSize();
@@ -265,19 +265,22 @@ public class FeedbackBasedQueryGenerator {
 			} else {
 				System.out.println("Query general frequency not present");
 			}
-			ArrayList<Integer> docs = queryStat.getDocumentsQueryAppearedIn();
-			if (docs != null) {
-				if (docs.isEmpty()) {
-					System.out.print("No docs problem");
+			if(queryStat!=null){
+				ArrayList<Integer> docs = queryStat.getDocumentsQueryAppearedIn();
+				if (docs != null) {
+					if (docs.isEmpty()) {
+						System.out.print("No docs problem");
 
-				} else {
-					Iterator e = docs.iterator();
-					System.out.println("Query appeared in these documents");
-					while (e.hasNext()) {
-						System.out.print(e.next() + ",");
+					} else {
+						Iterator e = docs.iterator();
+						System.out.println("Query appeared in these documents");
+						while (e.hasNext()) {
+							System.out.print(e.next() + ",");
+						}
 					}
 				}
 			}
+
 
 		}
 	}
