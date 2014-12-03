@@ -154,6 +154,8 @@ public class MainClass extends Thread {
 					.getCrawlStatusPath() + "number-repetitions");
 			crawlingConfig.setPathToNumberOfSentQueries(crawlingConfig
 					.getCrawlStatusPath() + "number-sent-queries");
+			
+			crawlingConfig.setQueriesSearchResults();
 			// crawlingThread = new FedwebCrawler(crawlingConfig,
 			// listOfReturnedResults);
 			// crawlingThreadTest = new CrawlerWithHtmlUnit(crawlingConfig,

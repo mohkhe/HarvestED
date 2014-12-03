@@ -203,7 +203,7 @@ public class IndexesConfig {
 		 * queryParser.parse("\""+searchString+"\""); topDocs =
 		 * indexSearcher.search(query2, 10);
 		 */
-		System.out.println("Number of hits: " + topDocs.totalHits);
+	//	System.out.println("Number of hits: " + topDocs.totalHits);
 
 		// Iterator<Hit> it = hits.iterator();
 		if (topDocs.scoreDocs.length > 0) {
@@ -272,4 +272,6 @@ public class IndexesConfig {
 
 		return textFromHTMl;
 	}
+
+
 }

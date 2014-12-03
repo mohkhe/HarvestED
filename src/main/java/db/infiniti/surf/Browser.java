@@ -37,7 +37,7 @@ public class Browser {
 	String driverURL = "";
 	List<WebElement> qResS = null;
 	int timeOutThread = 40000; // milisecond
-	int timeOutPageScript = 3; // seconds
+	int timeOutPageLoadOrScriptHandle = 40; // seconds
 	String collectionName = "";
 	String savePoPUPPath = "";
 
@@ -47,46 +47,60 @@ public class Browser {
 	public long totalStopTime = 0;
 	public long totalDriverTime = 0;
 
+	boolean freeDriver = true;
+
 	String pageText = "";
 
 	public void setDriver() {
-        org.openqa.selenium.firefox.FirefoxProfile profile = new FirefoxProfile();
-        profile.setPreference("dom.max_chrome_script_run_time", 0);
-        profile.setPreference("dom.max_script_run_time", 0);
-        profile.setPreference("webdriver.load.strategy", "fast");
-        profile.setPreference("network.http.connection-timeout", 2);
-        profile.setPreference("network.http.connection-retry-timeout", 1);
-        // gives error-illegalArgument
-        // profile.setPreference("dom.disable_open_during_load", true);
-        profile.setPreference("browser.download.folderList", 2);
-        profile.setPreference("browser.download.dir", savePoPUPPath);
-        
-        //new
-        profile.setPreference("browser.pdfjs.disabled", true);
-        profile.setPreference("browser.plugin.scan.plid.all", false);
-        profile.setPreference("browser.plugin.scan.acrobat", "99.0");
-        
-        profile.setPreference("browser.download.manager.showWhenStarting",
-                false);
-        profile.setPreference(
-                "browser.helperApps.neverAsk.saveToDisk",
-                "application/octet-stream,,application/octet,application/pdf,application/x-pdf,application/vnd.ms-excel,"
-                        + "application/x-xpinstall,application/x-zip,application/x-zip-compressed,application/zip,"
-                        + "application/msword,text/plain,text/csv,"
-                        + "application/vnd.fdf, application/x-msdos-program, application/x-unknown-application-octet-stream, "
-                        + "application/vnd.ms-powerpoint, application/excel, "
-                        + "application/vnd.ms-publisher, application/x-unknown-message-rfc822, "
-                        + "application/msword, application/x-mspublisher, application/x-tar, "
-                        + "application/x-gzip,application/x-stuffit, application/vnd.ms-works, application/powerpoint, "
-                        + "application/rtf, application/postscript, application/x-gtar, video/quicktime, video/x-msvideo, "
-                        + "video/mpeg, audio/x-wav, audio/x-midi, audio/x-aiff");
+		File template = new File("firefoxprofile");
+		org.openqa.selenium.firefox.FirefoxProfile profile = new FirefoxProfile(
+				template);
+		// org.openqa.selenium.firefox.FirefoxProfile profile = new
+		// FirefoxProfile();
+		profile.setPreference("dom.max_chrome_script_run_time", 0);
+		profile.setPreference("dom.max_script_run_time", 0);
+		profile.setPreference("webdriver.load.strategy", "fast");
+		profile.setPreference("network.http.connection-timeout", 2);
+		profile.setPreference("network.http.connection-retry-timeout", 1);
+		// gives error-illegalArgument
+		// profile.setPreference("dom.disable_open_during_load", true);
 
-        driver = new FirefoxDriver(profile);
-        // driver.manage().timeouts().implicitlyWait(2, TimeUnit.SECONDS);
-        driver.manage().timeouts()
-                .setScriptTimeout(timeOutPageScript, TimeUnit.SECONDS);
-        driver.manage().timeouts()
-                .pageLoadTimeout(timeOutPageScript, TimeUnit.SECONDS);
+		// profile.setPreference("browser.download.folderList", 2);
+		// profile.setPreference("browser.download.dir", savePoPUPPath);
+		// new
+		// profile.setPreference("browser.pdfjs.disabled", true);
+		// profile.setPreference("browser.plugin.scan.plid.all", false);
+		// profile.setPreference("browser.plugin.scan.acrobat", "99.0");
+
+		profile.setPreference("browser.download.manager.showWhenStarting",
+				false);
+		profile.setPreference(
+				"browser.helperApps.neverAsk.saveToDisk",
+				"application/octet-stream,,application/octet,application/pdf,application/x-pdf,application/vnd.ms-excel,"
+						+ "application/x-xpinstall,application/x-zip,application/x-zip-compressed,application/zip,"
+						+ "application/msword,text/plain,text/csv,"
+						+ "application/vnd.fdf, application/x-msdos-program, application/x-unknown-application-octet-stream, "
+						+ "application/vnd.ms-powerpoint, application/excel, "
+						+ "application/vnd.ms-publisher, application/x-unknown-message-rfc822, "
+						+ "application/msword, application/x-mspublisher, application/x-tar, "
+						+ "application/x-gzip,application/x-stuffit, application/vnd.ms-works, application/powerpoint, "
+						+ "application/rtf, application/postscript, application/x-gtar, video/quicktime, video/x-msvideo, "
+						+ "video/mpeg, audio/x-wav, audio/x-midi, audio/x-aiff");
+
+		try {
+			driver = new FirefoxDriver(profile);
+		} catch (WebDriverException e) {
+
+		}
+		// driver.manage().timeouts().implicitlyWait(2, TimeUnit.SECONDS);
+		driver.manage()
+				.timeouts()
+				.setScriptTimeout(timeOutPageLoadOrScriptHandle,
+						TimeUnit.SECONDS);
+		driver.manage()
+				.timeouts()
+				.pageLoadTimeout(timeOutPageLoadOrScriptHandle,
+						TimeUnit.SECONDS);
 
 		/*
 		 * String adblockfile =
@@ -213,6 +227,8 @@ public class Browser {
 		driverURL = url;// ;"http://www.quotenet.nl/Miljonairs/Klaus-de-Clercq-Zubli";
 		long time = System.currentTimeMillis();
 		totalStopTime = 0;
+		this.freeDriver = false;
+
 		Thread t = new Thread(new Runnable() {
 			public void run() {
 				String url = Thread.currentThread().getName();
@@ -244,26 +260,51 @@ public class Browser {
 
 		if (t.isAlive()) { // Thread still alive, we need to abort
 			long time2 = System.currentTimeMillis();
-			try {
-				// driver.findElement(By.tagName("body")).sendKeys("Keys.ESCAPE");
-				if (driver instanceof JavascriptExecutor) {
-					((JavascriptExecutor) driver)
-							.executeScript("return window.stop();");
-					System.out.println("page load is stopped. " + url);
-
+			Thread thStopGetPageSource = new Thread(new Runnable() {
+				public void run() {
+					String url = Thread.currentThread().getName();
+					try {
+						if (driver instanceof JavascriptExecutor) {
+							((JavascriptExecutor) driver).executeScript("return window.stop();");
+							// driver.findElement(By.tagName("body")).sendKeys("Keys.ESCAPE");
+							System.out
+									.println("getpageSource - page load is stopped in getPageSource. "
+											+ url);
+						}
+					} catch (UnreachableBrowserException e) {
+						System.out
+								.println("UnreachableBrowserException + executeScript - getpageSource "
+										+ url);
+						setDriver();
+					} catch (TimeoutException tmoutEx) {
+						System.out
+								.println("TimeoutException in stop() - getpageSource "
+										+ url);
+					} catch (WebDriverException wE) {
+						System.out
+								.println("WebDriverException in getpageSource stop() in getPageSource. "
+										+ url + wE.toString());
+					} catch (Exception see) {
+						System.out.println("Exception getpageSource stop(). "
+								+ url + see.toString());
+					}
 				}
-			} catch (UnreachableBrowserException e) {
-				System.out
-						.println("UnreachableBrowserException in stop() + loadingPage => new driver is set. "
-								+ url);
-				setDriver();
-			} catch (Exception see) {
-				System.out.println("in stop() + loadingPage " + url + ", "
-						+ see.getStackTrace());
+
+			}, url);
+
+			try {
+				thStopGetPageSource.join(timeOutThread);
+			} catch (InterruptedException e) { // ignore
+			}
+			// close the page if even closing command takes longer than supposed
+			if (thStopGetPageSource.isAlive()) {
+				driver.close();
+				this.setDriver();
 			}
 			totalStopTime = totalStopTime + System.currentTimeMillis() - time2;
 
 		}
+		this.freeDriver = true;
 
 	}
 
@@ -440,6 +481,7 @@ public class Browser {
 
 	}
 
+	// not used
 	public String getPageSourceNew(String url) {
 		// TODO Auto-generated method stub
 		driver.get("view-source:" + url);
@@ -470,13 +512,15 @@ public class Browser {
 	public String getPageSource(String url) {
 		// driver.navigate().to(url);
 		// String sourceText = "";
-		driverURL = url;// "http://www.quotenet.nl/Miljonairs/Klaus-de-Clercq-Zubli";
+		// "http://www.quotenet.nl/Miljonairs/Klaus-de-Clercq-Zubli";
 		// url = "http://www.quotenet.nl/Miljonairs/Klaus-de-Clercq-Zubli"
-		long time = System.currentTimeMillis();
+		driverURL = url;
 		totalStopTime = 0;
+		this.freeDriver = false;
 
-		time = System.currentTimeMillis();
-		Thread t = new Thread(new Runnable() {
+		long time = System.currentTimeMillis();
+
+		Thread tGetPageSource = new Thread(new Runnable() {
 			public void run() {
 				String url = Thread.currentThread().getName();
 				try {
@@ -510,52 +554,70 @@ public class Browser {
 			}
 
 		}, url);
-		t.start();
+		tGetPageSource.start();
 
 		try {
-			t.join(4 * timeOutThread);
+			tGetPageSource.join(timeOutThread);
 		} catch (InterruptedException e) { // ignore
 		}
 		this.getSourceTime = System.currentTimeMillis() - time;
 		totalDriverTime = totalDriverTime + getSourceTime;
 
-		if (t.isAlive()) { // Thread still alive, we need to abort
+		if (tGetPageSource.isAlive()) { // Thread still alive, we need to abort
 			long time2 = System.currentTimeMillis();
-			try {
-				if (driver instanceof JavascriptExecutor) {
-					((JavascriptExecutor) driver)
-							.executeScript("return window.stop();");
-					// driver.findElement(By.tagName("body")).sendKeys("Keys.ESCAPE");
-					System.out
-							.println("getpageSource - page load is stopped in getPageSource. "
-									+ url);
+			Thread thStopGetPageSource = new Thread(new Runnable() {
+				public void run() {
+					String url = Thread.currentThread().getName();
+					try {
+						if (driver instanceof JavascriptExecutor) {
+							((JavascriptExecutor) driver).executeScript("return window.stop();");
+							// driver.findElement(By.tagName("body")).sendKeys("Keys.ESCAPE");
+							System.out
+									.println("getpageSource - page load is stopped in getPageSource. "
+											+ url);
+						}
+					} catch (UnreachableBrowserException e) {
+						System.out
+								.println("UnreachableBrowserException + executeScript - getpageSource "
+										+ url);
+						setDriver();
+					} catch (TimeoutException tmoutEx) {
+						System.out
+								.println("TimeoutException in stop() - getpageSource "
+										+ url);
+					} catch (WebDriverException wE) {
+						System.out
+								.println("WebDriverException in getpageSource stop() in getPageSource. "
+										+ url + wE.toString());
+					} catch (Exception see) {
+						System.out.println("Exception getpageSource stop(). "
+								+ url + see.toString());
+					}
 				}
-			} catch (UnreachableBrowserException e) {
-				System.out
-						.println("UnreachableBrowserException + executeScript - getpageSource "
-								+ url);
-				setDriver();
-			} catch (TimeoutException tmoutEx) {
-				System.out
-						.println("TimeoutException in stop() - getpageSource "
-								+ url);
-			} catch (WebDriverException wE) {
-				System.out
-						.println("WebDriverException in getpageSource stop() in getPageSource. "
-								+ url + wE.toString());
-			} catch (Exception see) {
-				System.out.println("Exception getpageSource stop(). " + url
-						+ see.toString());
+
+			}, url);
+
+			try {
+				thStopGetPageSource.join(timeOutThread);
+			} catch (InterruptedException e) { // ignore
 			}
-			totalStopTime = totalStopTime + System.currentTimeMillis() - time2;
+			// close the page if even closing command takes longer than supposed
+			if (thStopGetPageSource.isAlive()) {
+				driver.close();
+				this.setDriver();
+			}
 		}
+		this.freeDriver = true;
 		return sourceText;
 	}
 
-	public String getText(){
+	// not used
+	public String getText() {
 		String pageText = new TextFromHtml().extractTextFromHtml(sourceText);
 		return pageText;
 	}
+
+	// not used
 	public String getPageTextThread() {
 		// driver.navigate().to(url);
 		// String sourceText = "";
@@ -641,22 +703,21 @@ public class Browser {
 		return text = pageText;
 	}
 
-	
-	public String getPageTextFromHTML(String HTMlCode){
+	public String getPageTextFromHTML(String HTMlCode) {
 		TextFromHtml extractor = new TextFromHtml();
 		String text = "";
-		try{
-			text =  extractor.extractTextFromHtml(HTMlCode);
+		try {
+			text = extractor.extractTextFromHtml(HTMlCode);
 		} catch (Exception e) {// Catch exception if any
 			text = getPageText();
-		} catch(java.lang.OutOfMemoryError error){
+		} catch (java.lang.OutOfMemoryError error) {
 			text = getPageText();
-		}catch(java.lang.StackOverflowError e){
+		} catch (java.lang.StackOverflowError e) {
 			text = getPageText();
 		}
 		return text;
 	}
-	
+
 	public String getPageText() {
 
 		long time = System.currentTimeMillis();

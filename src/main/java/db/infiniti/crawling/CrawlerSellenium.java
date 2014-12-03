@@ -13,7 +13,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import javax.imageio.ImageIO;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -25,7 +24,6 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.ErrorHandler.UnknownServerException;
 import org.w3c.dom.Document;
@@ -34,7 +32,11 @@ import org.w3c.dom.Node;
 import org.w3c.dom.html.HTMLAnchorElement;
 
 import ExcelWritePack.ExcelWriter;
-
+import db.infiniti.config.CrawlingConfig;
+import db.infiniti.config.CrawlingReportDS;
+import db.infiniti.sitedescription.WebsiteDS;
+import db.infiniti.surf.Browser;
+import db.infiniti.xpath.ResultLinkXpathFinder;
 /*needs htmlUnit 
  * import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
  import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
@@ -42,14 +44,8 @@ import ExcelWritePack.ExcelWriter;
  import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
  import db.infiniti.config.DetailedInfoXPathDetectionDS;*/
-
 import db.infiniti.config.CrawledLinkDS;
-import db.infiniti.config.CrawlingConfig;
-import db.infiniti.config.CrawlingReportDS;
 import db.infiniti.config.QueryResStatistics;
-import db.infiniti.sitedescription.WebsiteDS;
-import db.infiniti.surf.Browser;
-import db.infiniti.xpath.ResultLinkXpathFinder;
 
 /**
  * @author mohammadreza
@@ -110,7 +106,8 @@ public class CrawlerSellenium {
 	boolean stopCrawlForQuery = false;
 	boolean dataModelLoaded = false;
 
-	static int numberOfProcessedLinks = 0; 
+	static int numberOfProcessedLinks = 0;
+
 	// to extract data from detailedpages
 
 	public CrawlerSellenium(CrawlingConfig crawlingConfig,
@@ -164,10 +161,51 @@ public class CrawlerSellenium {
 							.readFirstNumberFromFile(crawlingConfig.pathToNumberOfSentQueries));
 
 		} else {
+			if (crawlingConfig.queriesResults.size() > 0) {
+				Iterator<String> queryIter = crawlingConfig.queriesResults
+						.keySet().iterator();
+				crawlingConfig.processInitiateQuery();
+				// also firstQuery=false;
+				// also increase queryindex
+				while (queryIter.hasNext()) {
+					String stringQuery = (String) queryIter.next();
+					crawlingConfig.addQuery(stringQuery);
+					List<String> listOfResultsForQuery = crawlingConfig.queriesResults
+							.get(stringQuery);
+					for (String resutlLink : listOfResultsForQuery) {
+						totalreturnedResForQuery++;
+						if (!listOfAllReturnedResults.contains(resutlLink)) {
+							listOfAllReturnedResults.add(resutlLink);
 
+							increaseReturnedResr();// totalreturnedRes
+						} else if (listOfAllReturnedResults
+								.contains(resutlLink)) {
+							repeatedLinks++;// for one query
+							crawlReport.incNumRepeatedLinksInGeneral();
+							// in total
+							incrementNumberOfProcessedLinks();
+
+						}
+					}
+					crawlReport.addQueryNumberofItsResults(crawlingConfig.query,
+							(crawlingConfig.getQueryIndex() - 1),
+							listOfAllReturnedResults.size(),
+							crawlReport.getNumRepeatedLinks(), repeatedLinks,
+							totalreturnedResForQuery);
+					printQueriesResults("crawledData/"
+							+ crawlingConfig.getCollectionName() + "/"
+							+ (crawlingConfig.getQueryIndex() - 1) + "-results.xls");
+
+					crawlReport.setNumRepeatedLinks(0);
+					totalreturnedResForQuery = 0;
+					totalreturnedResForQueryList.set(0, totalreturnedResForQuery);
+					repeatedLinks = 0;
+				}
+
+			}
 			url = crawlingConfig.setNextQuery();
 			posedQueiesIndex++;
-			crawlingConfig.saveCrawlStatusQuery();
+			// crawlingConfig.saveCrawlStatusQuery();
 			noOfReturnedResultsPages = 0;
 		}
 		if (url.equals("")) {
@@ -218,36 +256,39 @@ public class CrawlerSellenium {
 			}
 			crawlingConfig.setSearchResultPageNumber(noOfReturnedResultsPages);
 
-			if (crawlingConfig.getQuerySelectionApproach() == crawlingConfig.mostFreqFeedbackText){
-				String pageContent= "";
+			if (crawlingConfig.getQuerySelectionApproach() == crawlingConfig.mostFreqFeedbackText) {
+				String pageContent = "";
 				String pageHTMLContent = "";
 				// the search result page content also included
-			/*	if (crawlingConfig.cache
-						.existsAlreadyInCacheOrIndex(searchResultlink, crawlingConfig.isIndexed())) {
-					pageContent = crawlingConfig.cache
-							.getPageHTMLContentFromCacheOrIndex(searchResultlink, crawlingConfig.isIndexed);
-					
-					 * pageHTMLContent = crawlingConfig.cache
-					 * .getPageHTMLContentFromCache(resultLink);
-					 
-				}else{
+				/*
+				 * if (crawlingConfig.cache
+				 * .existsAlreadyInCacheOrIndex(searchResultlink,
+				 * crawlingConfig.isIndexed())) { pageContent =
+				 * crawlingConfig.cache
+				 * .getPageHTMLContentFromCacheOrIndex(searchResultlink,
+				 * crawlingConfig.isIndexed);
+				 * 
+				 * pageHTMLContent = crawlingConfig.cache
+				 * .getPageHTMLContentFromCache(resultLink);
+				 * 
+				 * }else{ pageHTMLContent = sRPagesbrowser
+				 * .getPageSource(searchResultlink); pageContent =
+				 * sRPagesbrowser.getPageText();//.getText();
+				 * crawlingConfig.cache.saveInCache( searchResultlink,
+				 * pageContent, pageHTMLContent, crawlingConfig.isIndexed); }
+				 */
+				if (crawlingConfig.isIndexed()) {
 					pageHTMLContent = sRPagesbrowser
 							.getPageSource(searchResultlink);
-					pageContent = sRPagesbrowser.getPageText();//.getText();
-					 crawlingConfig.cache.saveInCache(
-							 searchResultlink, pageContent,
-							 pageHTMLContent, crawlingConfig.isIndexed);
-				}*/
-				if(crawlingConfig.isIndexed()){
-					pageHTMLContent = sRPagesbrowser
-							.getPageSource(searchResultlink);
-					pageContent = sRPagesbrowser.getPageTextFromHTML(pageHTMLContent);
-					//pageContent = sRPagesbrowser.getPageText();//.getText();
-					 crawlingConfig.cache.saveInCache(
-							 searchResultlink, pageContent,
-							 pageHTMLContent, crawlingConfig.isIndexed);
-				}else if(crawlingConfig.isHave_words_in_memory()){
-					crawlingConfig.updateQueryList(sRPagesbrowser.getPageText());
+					pageContent = sRPagesbrowser
+							.getPageTextFromHTML(pageHTMLContent);
+					// pageContent = sRPagesbrowser.getPageText();//.getText();
+					crawlingConfig.cache.saveInCache(searchResultlink,
+							pageContent, pageHTMLContent,
+							crawlingConfig.isIndexed);
+				} else if (crawlingConfig.isHave_words_in_memory()) {
+					crawlingConfig
+							.updateQueryList(sRPagesbrowser.getPageText());
 				}
 			}
 
@@ -277,7 +318,7 @@ public class CrawlerSellenium {
 			}
 			numberOfProcessedLinks = 0;
 			for (CrawledLinkDS crawledLinkDS : listOfLinksDetailedPages) {
-				
+
 				boolean docIsIndexed = false;
 				increaseReturnedResForQueryNumber();// totalreturnedResForQuery
 				String resultLink = crawledLinkDS.getLink();
@@ -319,19 +360,27 @@ public class CrawlerSellenium {
 								extractFromDetailedPages(
 										crawlingConfig.getOutputDataBase(),
 										detailedPagesbrowser);
-							}/* else if (!crawlingConfig.cache
-									.existsAlreadyInCacheOrIndex(resultLink, crawlingConfig.isIndexed())) {
-								detailedPagesbrowser.loadPage(resultLink);
-							}*/
+							}/*
+							 * else if (!crawlingConfig.cache
+							 * .existsAlreadyInCacheOrIndex(resultLink,
+							 * crawlingConfig.isIndexed())) {
+							 * detailedPagesbrowser.loadPage(resultLink); }
+							 */
 							if (crawlingConfig.feedbackBasedApproach == true) {
 								String pageContent = "";
 								String pageHTMLContent = "";
 								if (crawlingConfig.cache
-										.existsAlreadyInCacheOrIndex(resultLink, crawlingConfig.isIndexed())) {
+										.existsAlreadyInCacheOrIndex(
+												resultLink,
+												crawlingConfig.isIndexed())) {
 									pageHTMLContent = crawlingConfig.cache
-											.getPageHTMLContentFromCacheOrIndex(resultLink, crawlingConfig.isIndexed);
+											.getPageHTMLContentFromCacheOrIndex(
+													resultLink,
+													crawlingConfig.isIndexed);
 									pageContent = crawlingConfig.cache
-											.getPageTextContentFromCache(resultLink, crawlingConfig.isIndexed);
+											.getPageTextContentFromCache(
+													resultLink,
+													crawlingConfig.isIndexed);
 									/*
 									 * pageHTMLContent = crawlingConfig.cache
 									 * .getPageHTMLContentFromCache(resultLink);
@@ -340,25 +389,30 @@ public class CrawlerSellenium {
 									detailedPagesbrowser.loadPage(resultLink);
 									pageHTMLContent = detailedPagesbrowser
 											.getPageSource(resultLink);
-									pageContent = detailedPagesbrowser.getPageTextFromHTML(pageHTMLContent);
-									//pageContent = detailedPagesbrowser.getPageText();//.getText();
-									 crawlingConfig.cache.saveInCache(
-	                                            resultLink, pageContent,
-	                                            pageHTMLContent, crawlingConfig.isIndexed);
+									pageContent = detailedPagesbrowser
+											.getPageTextFromHTML(pageHTMLContent);
+									// pageContent =
+									// detailedPagesbrowser.getPageText();//.getText();
+									crawlingConfig.cache.saveInCache(
+											resultLink, pageContent,
+											pageHTMLContent,
+											crawlingConfig.isIndexed);
 								}
 								setTextHtmlOfLink(pageHTMLContent,
 										crawledLinkDS);// it
 								crawledLinkDS.setLinkTextContent(pageContent);
-								if(crawlingConfig.isHave_words_in_memory()){
-									crawlingConfig.updateQueryList(crawledLinkDS
-											.getLinkTextContent());
+								if (crawlingConfig.isHave_words_in_memory()) {
+									crawlingConfig
+											.updateQueryList(crawledLinkDS
+													.getLinkTextContent());
 									crawlingConfig.fbBasedQueryGenerator
 											.prepareQuerySelection(
 													crawledLinkDS
 															.getNumberOfDocInReturnedResults(),
 													crawledLinkDS
-															.getLinkTextContent());								}
-								
+															.getLinkTextContent());
+								}
+
 							}
 
 							if (!listOfReturnedResultsPerQuery
@@ -367,7 +421,7 @@ public class CrawlerSellenium {
 							} else {
 								crawlReport.incNoRepeatedLinks();
 							}
-							//addToXmlDocumentItem(crawledLinkDS, doc);
+							// addToXmlDocumentItem(crawledLinkDS, doc);
 
 							if (crawlingConfig.SaveDSextractedInfoInFile == true) {
 								saveExtractedInfoOfLink(crawledLinkDS,
@@ -377,7 +431,7 @@ public class CrawlerSellenium {
 							crawlingConfig.saveCrawlStatus(crawledLinkDS
 									.getLink());
 							crawlingConfig.freeBrowser(detailedPagesbrowser);
-							//numberOfProcessedLinks++;
+							// numberOfProcessedLinks++;
 							incrementNumberOfProcessedLinks();
 
 						}
@@ -402,7 +456,7 @@ public class CrawlerSellenium {
 					// in total
 					incrementNumberOfProcessedLinks();
 
-				}else{
+				} else {
 					incrementNumberOfProcessedLinks();
 
 				}
@@ -416,16 +470,17 @@ public class CrawlerSellenium {
 					break;// check. if not work
 				}
 			}
-			while(numberOfProcessedLinks < numberOfDocInReturnedResults	&& numberOfProcessedLinks < (numberOfDocInReturnedResults-1)){//listOfLinksDetailedPages.size()
-				//TODO investigate why this happens
+			while (numberOfProcessedLinks < numberOfDocInReturnedResults
+					&& numberOfProcessedLinks < (numberOfDocInReturnedResults - 1)) {// listOfLinksDetailedPages.size()
+				// TODO investigate why this happens
 				try {
-				    TimeUnit.SECONDS.sleep(3);
+					TimeUnit.SECONDS.sleep(3);
 				} catch (InterruptedException e) {
-				    //Handle exception
+					// Handle exception
 				}
 			}
 			crawlingConfig.waitTillAllBrowsersAreFree();
-			if (posedQueiesIndex > 300) {
+			if (posedQueiesIndex > 50000) {
 				continueCrawl = false;
 				stopCrawlForQuery = true;
 			}
@@ -460,7 +515,9 @@ public class CrawlerSellenium {
 				repeatedLinks = 0;
 
 				url = crawlingConfig.setNextQuery();
-				crawlingConfig.saveCrawlStatusQuery();
+				crawlingConfig
+						.saveCrawlStatusQuery(listOfReturnedResultsPerQuery);
+				listOfReturnedResultsPerQuery.clear();
 				posedQueiesIndex++;
 
 				if (url == null) { // there is no next query or next result
@@ -506,7 +563,9 @@ public class CrawlerSellenium {
 						}
 					}
 					url = crawlingConfig.setNextQuery();
-					crawlingConfig.saveCrawlStatusQuery();
+					crawlingConfig
+							.saveCrawlStatusQuery(listOfReturnedResultsPerQuery);
+					listOfReturnedResultsPerQuery.clear();
 					posedQueiesIndex++;
 
 					if (url == null) { // there is no next query or next result
@@ -519,7 +578,7 @@ public class CrawlerSellenium {
 
 		crawlingConfig.printQueryStatistics();
 		crawlingConfig.saveCrawlStatusCollectionName();
-	//	saveCrawledResultInXML(doc);
+		// saveCrawledResultInXML(doc);
 		printQueriesResults("crawledData/" + crawlingConfig.getCollectionName()
 				+ "/results.xls");
 
@@ -541,9 +600,9 @@ public class CrawlerSellenium {
 	}
 
 	public synchronized void incrementNumberOfProcessedLinks() {
-        this.numberOfProcessedLinks++;
-    }
-	
+		this.numberOfProcessedLinks++;
+	}
+
 	private void increaseReturnedResForQueryNumber() {
 		synchronized (totalreturnedResForQueryList) {
 			totalreturnedResForQuery = totalreturnedResForQuery + 1;
@@ -780,10 +839,10 @@ public class CrawlerSellenium {
 
 			} catch (UnknownServerException we) {
 
-			}catch(org.openqa.selenium.NoSuchWindowException ee){
-				
-			}catch(org.openqa.selenium.remote.UnreachableBrowserException ee){
-				
+			} catch (org.openqa.selenium.NoSuchWindowException ee) {
+
+			} catch (org.openqa.selenium.remote.UnreachableBrowserException ee) {
+
 			}
 			return result;
 		}
@@ -802,10 +861,10 @@ public class CrawlerSellenium {
 
 		} catch (UnknownServerException ew) {
 
-		}catch(org.openqa.selenium.NoSuchWindowException ee){
-			
-		}catch(org.openqa.selenium.remote.UnreachableBrowserException ee){
-			
+		} catch (org.openqa.selenium.NoSuchWindowException ee) {
+
+		} catch (org.openqa.selenium.remote.UnreachableBrowserException ee) {
+
 		}
 
 		if (links == null) {
@@ -817,10 +876,10 @@ public class CrawlerSellenium {
 
 			} catch (UnknownServerException we) {
 
-			}catch(org.openqa.selenium.NoSuchWindowException ee){
-				
-			}catch(org.openqa.selenium.remote.UnreachableBrowserException ee){
-				
+			} catch (org.openqa.selenium.NoSuchWindowException ee) {
+
+			} catch (org.openqa.selenium.remote.UnreachableBrowserException ee) {
+
 			}
 		}
 		return result;
@@ -879,10 +938,10 @@ public class CrawlerSellenium {
 
 			} catch (UnknownServerException we) {
 
-			}catch(org.openqa.selenium.NoSuchWindowException ee){
-				
-			}catch(org.openqa.selenium.remote.UnreachableBrowserException ee){
-				
+			} catch (org.openqa.selenium.NoSuchWindowException ee) {
+
+			} catch (org.openqa.selenium.remote.UnreachableBrowserException ee) {
+
 			}
 
 			if (result.contains(crawledLinkDS.getTitle())) {
@@ -908,10 +967,10 @@ public class CrawlerSellenium {
 
 			} catch (UnknownServerException ew) {
 
-			}catch(org.openqa.selenium.NoSuchWindowException ee){
-				
-			}catch(org.openqa.selenium.remote.UnreachableBrowserException ee){
-				
+			} catch (org.openqa.selenium.NoSuchWindowException ee) {
+
+			} catch (org.openqa.selenium.remote.UnreachableBrowserException ee) {
+
 			}
 
 			if (links == null) {
@@ -925,10 +984,10 @@ public class CrawlerSellenium {
 
 				} catch (UnknownServerException we) {
 
-				}catch(org.openqa.selenium.NoSuchWindowException ee){
-					
-				}catch(org.openqa.selenium.remote.UnreachableBrowserException ee){
-					
+				} catch (org.openqa.selenium.NoSuchWindowException ee) {
+
+				} catch (org.openqa.selenium.remote.UnreachableBrowserException ee) {
+
 				}
 			}
 		}
@@ -1022,10 +1081,10 @@ public class CrawlerSellenium {
 
 					} catch (UnknownServerException we) {
 
-					}catch(org.openqa.selenium.NoSuchWindowException ee){
-						
-					}catch(org.openqa.selenium.remote.UnreachableBrowserException ee){
-						
+					} catch (org.openqa.selenium.NoSuchWindowException ee) {
+
+					} catch (org.openqa.selenium.remote.UnreachableBrowserException ee) {
+
 					}
 					url = "javascript clicked.";
 				}
@@ -1203,10 +1262,10 @@ public class CrawlerSellenium {
 
 		} catch (UnknownServerException ew) {
 
-		} catch(org.openqa.selenium.NoSuchWindowException ee){
-			
-		}catch(org.openqa.selenium.remote.UnreachableBrowserException ee){
-			
+		} catch (org.openqa.selenium.NoSuchWindowException ee) {
+
+		} catch (org.openqa.selenium.remote.UnreachableBrowserException ee) {
+
 		}
 
 		if (links == null) {
@@ -1231,10 +1290,10 @@ public class CrawlerSellenium {
 
 				} catch (UnknownServerException er) {
 
-				} catch(org.openqa.selenium.NoSuchWindowException ee){
-					
-				}catch(org.openqa.selenium.remote.UnreachableBrowserException ee){
-					
+				} catch (org.openqa.selenium.NoSuchWindowException ee) {
+
+				} catch (org.openqa.selenium.remote.UnreachableBrowserException ee) {
+
 				}
 			}
 		}

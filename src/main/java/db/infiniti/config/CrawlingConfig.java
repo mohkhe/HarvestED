@@ -29,6 +29,9 @@ public class CrawlingConfig {
 	String currentCollectionName;
 	ArrayList<String> queries;
 	LinkedHashMap<String, String> queryNumberofResults;
+	public HashMap<String, List<String>> queriesResults = new HashMap<String, List<String>>();
+
+	
 	private String openDescFilePath = "";
 	private String openDescDirPath = "";
 	private String queriesPath = "";
@@ -499,6 +502,13 @@ public class CrawlingConfig {
 		String[] tokens = content.split(delims);
 		return tokens;
 	}
+	
+	public void addQuery(String query){
+		sentQueries.add(query.intern());
+		querySet.put(query.intern(), 0);
+		System.out.println("New query, number " + queryIndex + " : " + query);
+		queryIndex++;
+	}
 
 	public String setNextQuery() {
 		String url = null;
@@ -654,6 +664,16 @@ public class CrawlingConfig {
 		return url;
 	}
 
+	public String processInitiateQuery(){
+		for (String part : initialQuery) {
+			initialQueryProcesses = initialQueryProcesses + "+\""
+					+ part + "\"";
+		}
+		initialQueryProcesses = initialQueryProcesses.replaceFirst(
+				"\\+", "");
+		firstQuery = false;
+		return initialQueryProcesses;
+	}
 	private void saveMostFreqTable() {
 		try {
 			File file = new File(this.getCrawlStatusPath() + "tableofmostfreq");
@@ -982,7 +1002,7 @@ public class CrawlingConfig {
 				this.pathToCoveredCollections, true);
 	}
 
-	public void saveCrawlStatusQuery() {// ,
+	public void saveCrawlStatusQuery(List<String> listOfReturnedResultsForQuery) {// ,
 		if (this.queryIndex == 1) {// To replace if it is repeated for first
 									// time
 			this.saveStringInFile(query, this.pathToSentQueriesDoc, false);
@@ -990,7 +1010,7 @@ public class CrawlingConfig {
 			this.saveStringInFile(query, this.pathToSentQueriesDoc, true);
 		}
 		this.saveStringInFile("", this.pathToVisitedPagesPerQuery, false);// remove
-																			// the
+		this.saveListsQueryResults(query, listOfSourcesFolders, this.pathToVisitedPagesPerQuery);																	// the
 																			// urls
 																			// entered
 																			// for
@@ -998,6 +1018,25 @@ public class CrawlingConfig {
 																			// query
 	}
 
+	public void saveListsQueryResults(String query, ArrayList<String> list, String filePath) {
+		try {
+			File file = new File(filePath);
+			FileWriter fstream = new FileWriter(file, true);
+			BufferedWriter out = new BufferedWriter(fstream);
+			out.write("query::"+query+"\n");
+			out.flush();
+			for (String element : list) {
+				out.write("returnedresult::"+element + "\n");
+				out.flush();
+			}
+			out.close();
+			fstream.close();
+		} catch (Exception e) {// Catch exception if any
+			System.err.println("Error: " + e.getMessage());
+		}
+
+	}
+	
 	public void saveLists(ArrayList<String> list, String filePath) {
 		try {
 			File file = new File(filePath);
@@ -1344,6 +1383,36 @@ public class CrawlingConfig {
 			this.fbBasedQueryGenerator.printQueryStatistics();
 
 		}
+	}
+
+	public void setQueriesSearchResults() {
+		
+		try {
+			File file = new File(this.pathToVisitedPagesPerQuery);
+			FileReader fstream = new FileReader(file);
+			BufferedReader in = new BufferedReader(fstream);
+			String line;
+			String query = "";
+			List<String> resultsPerQuery = new ArrayList<String>();
+			while ((line = in.readLine()) != null) {
+				// String line = in.readLine();
+				if(line.startsWith("query::")){
+					if(resultsPerQuery.size() == 0 && !query.equals("")){
+						//if it is not the first query
+						this.queriesResults.put(query, resultsPerQuery);
+						resultsPerQuery.clear();
+					}
+					query = line.replace("query::","");
+				}else if(line.startsWith("returnedresult::")){
+					String resultLink = line.replace("returnedresult::", "");
+					resultsPerQuery.add(resultLink);
+				}
+			}
+			in.close();
+			fstream.close();
+		} catch (Exception e) {// Catch exception if any
+			System.err.println("Error: " + e.getMessage());
+		}		
 	}
 
 }
