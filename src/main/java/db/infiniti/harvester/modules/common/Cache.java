@@ -90,77 +90,68 @@ public class Cache {
 	}
 
 	public void saveInCache(String URL, String pageContent, String pageHTML,
-            boolean isIndexed) {
-        if (isIndexed) {
-            if((!pageContent.equals("")) || pageContent.equalsIgnoreCase("error")){
-                indexNew.index(URL, pageContent, pageHTML);
-            }else{
-                System.out.println("Empty text or error in extracting "+URL);
-            }
-        } else {
-            try {
-                this.cachedURLsFileNames.put(URL, lastChachedPageFileNumber);
-                out.write(URL + "\t" + lastChachedPageFileNumber + "\n");
-                out.flush();
+			boolean isIndexed) {
+		if (isIndexed) {
+			if ((!pageContent.equals(""))
+					|| pageContent.equalsIgnoreCase("error")) {
+				indexNew.index(URL, pageContent, pageHTML);
+			} else {
+				System.out.println("Empty text or error in extracting " + URL);
+			}
+		} else {
+			try {
+				this.cachedURLsFileNames.put(URL, lastChachedPageFileNumber);
+				out.write(URL + "\t" + lastChachedPageFileNumber + "\n");
+				out.flush();
 
-                FileWriter fstreamFile = new FileWriter(cacheMapDirectoryPath
-                        + lastChachedPageFileNumber + ".txt", false);
-                BufferedWriter outFile = new BufferedWriter(fstreamFile);
-                outFile.write(pageContent);
-                outFile.flush();
-                outFile.close();
-                fstreamFile.close();
+				FileWriter fstreamFile = new FileWriter(cacheMapDirectoryPath
+						+ lastChachedPageFileNumber + ".txt", false);
+				BufferedWriter outFile = new BufferedWriter(fstreamFile);
+				outFile.write(pageContent);
+				outFile.flush();
+				outFile.close();
+				fstreamFile.close();
 
-                fstreamFile = new FileWriter(cacheMapDirectoryPath
-                        + lastChachedPageFileNumber + ".html", false);
-                outFile = new BufferedWriter(fstreamFile);
-                outFile.write(pageHTML);
-                outFile.flush();
-                outFile.close();
-                fstreamFile.close();
+				fstreamFile = new FileWriter(cacheMapDirectoryPath
+						+ lastChachedPageFileNumber + ".html", false);
+				outFile = new BufferedWriter(fstreamFile);
+				outFile.write(pageHTML);
+				outFile.flush();
+				outFile.close();
+				fstreamFile.close();
 
-                lastChachedPageFileNumber++;
-            } catch (Exception e) {// Catch exception if any
-                System.err.println("Error: " + e.getMessage());
-            }
-        }
-    }
-
+				lastChachedPageFileNumber++;
+			} catch (Exception e) {// Catch exception if any
+				System.err.println("Error: " + e.getMessage());
+			}
+		}
+	}
 
 	public boolean existsAlreadyInCacheOrIndex(String url, boolean isIndexed) {
-        if (isIndexed) {
-            try {
-                if (indexOld.searchIndex(url, "url")) {
-                    textOfURL = indexOld.textOfURL;
-                    sourceCodeOfURL = indexOld.sourceCodeOfURL;
-                    if (!indexNew.searchIndex(url, "url")) {
-                        indexNew.index(url, textOfURL, sourceCodeOfURL);
-                    }
-                    return true;
-                } else if (indexNew.searchIndex(url, "url")) {
-                    textOfURL = indexOld.textOfURL;
-                    sourceCodeOfURL = indexOld.sourceCodeOfURL;
-                    return true;
-                } else {
-                    return false;
-                }
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            } catch (ParseException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        } else {
-            if (this.cachedURLsFileNames.containsKey(url)) {
-                return true;
-            } else {
-                return false;
-            }
-        }
-        return false;
-    }
+		if (isIndexed) {
+			if (indexOld.searchIndex(url, "url")) {
+				textOfURL = indexOld.textOfURL;
+				sourceCodeOfURL = indexOld.sourceCodeOfURL;
+				if (!indexNew.searchIndex(url, "url")) {
+					indexNew.index(url, textOfURL, sourceCodeOfURL);
+				}
+				return true;
+			} else if (indexNew.searchIndex(url, "url")) {
+				textOfURL = indexOld.textOfURL;
+				sourceCodeOfURL = indexOld.sourceCodeOfURL;
+				return true;
+			} else {
+				return false;
+			}
 
+		} else {
+			if (this.cachedURLsFileNames.containsKey(url)) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+	}
 
 	public String getPageTextContentFromCache(String url, boolean isIndexed) {
 		String pageContent = "";
@@ -235,22 +226,12 @@ public class Cache {
 
 	public boolean contains(String term) {
 		// TODO Auto-generated method stub
-		try {
-			if(this.indexNew.searchIndex(term, "text")){
-				return true;
-			}
-			else{
-				return false;
+		if (this.indexNew.searchIndex(term, "text")) {
+			return true;
+		} else {
+			return false;
 
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
-		return false;
 	}
 
 	public void setIndexOld() {
@@ -258,7 +239,7 @@ public class Cache {
 	}
 
 	public void setIndexNew() {
-		indexNew = new IndexesConfig("newindex/pages");		
-		
+		indexNew = new IndexesConfig("newindex/pages");
+
 	}
 }

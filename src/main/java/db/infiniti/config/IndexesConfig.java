@@ -22,6 +22,7 @@ import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermFreqVector;
 import org.apache.lucene.queryParser.MultiFieldQueryParser;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.search.IndexSearcher;
@@ -48,7 +49,8 @@ public class IndexesConfig {
 	public String sourceCodeOfURL = "";
 	public int docId = 0;
 	public String indexName = "";
-
+	public HighFreqTerms freqTermsFinderInIndex= new HighFreqTerms();
+	
 	// CorruptIndexException, LockObtainFailedException, IOException,
 	// ParseException
 	public IndexesConfig(String indexDirectoryPath) {
@@ -82,26 +84,20 @@ public class IndexesConfig {
 	public void searchGetDocIndex() {
 		String url = "";
 		if (url != null) {
-			try {
-				if (searchIndex(url, "url")) {
-					String htmlCode = textOfURL;
-					String textFromHtml = sourceCodeOfURL;
-				
-				} else {
-					if (!textOfURL.equals("empty-noindex")) {
-						index(url, textOfURL, sourceCodeOfURL);
-					}
-					//System.out.println("Already in the index");
+			if (searchIndex(url, "url")) {
+				String htmlCode = textOfURL;
+				String textFromHtml = sourceCodeOfURL;
+
+			} else {
+				if (!textOfURL.equals("empty-noindex")) {
+					index(url, textOfURL, sourceCodeOfURL);
 				}
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (ParseException er) {
-				er.printStackTrace();
+				// System.out.println("Already in the index");
 			}
+
 		}
-	//	closeindex();
-	//	saveListsofQueries(emptyFiles);
+		// closeindex();
+		// saveListsofQueries(emptyFiles);
 	}
 
 	public static void saveListsofQueries(HashMap<String, String> list) {
@@ -122,7 +118,6 @@ public class IndexesConfig {
 		}
 
 	}
-
 
 	public static String readHTMlFile(File file) {
 		String htmlCode = "";
@@ -163,7 +158,7 @@ public class IndexesConfig {
 				Field.TermVector.YES));
 		doc.add(new Field("html", htmlCode, Field.Store.YES,
 				Field.Index.NOT_ANALYZED));
-		//TODO change for other queries
+		// TODO change for other queries
 		doc.add(new Field("query", "vitol", Field.Store.YES,
 				Field.Index.NOT_ANALYZED));
 		try {
@@ -179,17 +174,100 @@ public class IndexesConfig {
 		System.out.println("index generated");
 	}
 
-	public boolean searchIndex(String searchString, String termString) throws IOException,
-			ParseException {
+	public String searchIndexDocTextReturn(String searchString,
+			String termString) {
 		System.out.println("Searching for '" + searchString + "'");
 		// Directory directory = FSDirectory.getDirectory();
-		IndexReader indexReader = IndexReader.open(indexDirectory);
-		IndexSearcher indexSearcher = new IndexSearcher(indexReader);
-		int n = w.numDocs();
+		IndexReader indexReader;
+		try {
+			indexReader = IndexReader.open(indexDirectory);
+			IndexSearcher indexSearcher = new IndexSearcher(indexReader);
+			int n = w.numDocs();
 
-		Term term = new Term(termString, searchString);
-		TermQuery query = new TermQuery(term);
-		TopDocs topDocs = indexSearcher.search(query, 10);
+			Term term = new Term(termString, searchString);
+			TermQuery query = new TermQuery(term);
+			TopDocs topDocs = indexSearcher.search(query, 10);
+			if (topDocs.scoreDocs.length > 0) {
+				// while(it.hasNext()){
+				int docID = topDocs.scoreDocs[0].doc;
+				Document doc = indexSearcher.doc(docID);
+				textOfURL = doc.get("text");
+				// sourceCodeOfURL = doc.get("html");
+				this.docId = docID;
+			}
+		} catch (CorruptIndexException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	
+		return textOfURL;
+	}
+
+	public TermFreqVector searchIndexReturnFreqTerms(String searchString,
+			String termString) {
+		System.out.println("Searching for '" + searchString + "'");
+		// Directory directory = FSDirectory.getDirectory();
+		IndexReader indexReader;
+		TermFreqVector termFreqDoc = null;
+		try {
+			indexReader = IndexReader.open(indexDirectory);
+			IndexSearcher indexSearcher = new IndexSearcher(indexReader);
+			Term term = new Term(termString, searchString);
+			TermQuery query = new TermQuery(term);
+			TopDocs topDocs = indexSearcher.search(query, 10);
+			if (topDocs.scoreDocs.length > 0) {
+				// while(it.hasNext()){
+				int docId = topDocs.scoreDocs[0].doc;
+				Document doc = indexSearcher.doc(docId);
+			//	textOfURL = doc.get("text");
+				// sourceCodeOfURL = doc.get("html");
+			//	this.docId = docID;
+				termFreqDoc = indexReader.getTermFreqVector(docId, "text");
+		        
+			}
+		} catch (CorruptIndexException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	
+		return termFreqDoc;
+	}
+	
+	public boolean searchIndex(String searchString, String termString) {
+		System.out.println("Searching for '" + searchString + "'");
+		// Directory directory = FSDirectory.getDirectory();
+		IndexReader indexReader;
+		try {
+			indexReader = IndexReader.open(indexDirectory);
+			IndexSearcher indexSearcher = new IndexSearcher(indexReader);
+			int n = w.numDocs();
+
+			Term term = new Term(termString, searchString);
+			TermQuery query = new TermQuery(term);
+			TopDocs topDocs = indexSearcher.search(query, 10);
+			if (topDocs.scoreDocs.length > 0) {
+				// while(it.hasNext()){
+				int docID = topDocs.scoreDocs[0].doc;
+				Document doc = indexSearcher.doc(docID);
+				textOfURL = doc.get("text");
+				sourceCodeOfURL = doc.get("html");
+				this.docId = docID;
+				return true;
+			} else
+				return false;
+		} catch (CorruptIndexException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return false;
 
 		/*
 		 * BooleanQuery bquery = new BooleanQuery(); bquery.add(query,
@@ -203,19 +281,10 @@ public class IndexesConfig {
 		 * queryParser.parse("\""+searchString+"\""); topDocs =
 		 * indexSearcher.search(query2, 10);
 		 */
-	//	System.out.println("Number of hits: " + topDocs.totalHits);
+		// System.out.println("Number of hits: " + topDocs.totalHits);
 
 		// Iterator<Hit> it = hits.iterator();
-		if (topDocs.scoreDocs.length > 0) {
-			// while(it.hasNext()){
-			int docID = topDocs.scoreDocs[0].doc;
-			Document doc = indexSearcher.doc(docID);
-			textOfURL = doc.get("text");
-			sourceCodeOfURL = doc.get("html");
-			this.docId = docID;
-			return true;
-		} else
-			return false;
+
 	}
 
 	public void queryIndex() {
@@ -272,6 +341,49 @@ public class IndexesConfig {
 
 		return textFromHTMl;
 	}
-
+	
+	public String getMostFreqTermInIndex(int KIntopK, ArrayList<String> sentQueries){
+		IndexReader indexReader = null;
+		try {
+			indexReader = IndexReader.open(indexDirectory);
+		} catch (CorruptIndexException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		String mostFrerqTerm = "";
+		try {
+			mostFrerqTerm = freqTermsFinderInIndex.HighFreqTerms(indexDirectory, analyzer, indexReader, KIntopK, sentQueries);
+			indexReader.close();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return mostFrerqTerm;
+	}
+	
+	public String getLeastFreqTermInIndex(int KIntopK, ArrayList<String> sentQueries){
+		IndexReader indexReader = null;
+		try {
+			indexReader = IndexReader.open(indexDirectory);
+		} catch (CorruptIndexException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		String lowFrerqTerm = "";
+		try {
+			lowFrerqTerm = freqTermsFinderInIndex.LowFreqTerms(indexDirectory, analyzer, indexReader, KIntopK, sentQueries);
+			indexReader.close();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return lowFrerqTerm;
+	}
 
 }

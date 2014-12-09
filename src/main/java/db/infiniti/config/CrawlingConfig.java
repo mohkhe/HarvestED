@@ -29,9 +29,9 @@ public class CrawlingConfig {
 	String currentCollectionName;
 	ArrayList<String> queries;
 	LinkedHashMap<String, String> queryNumberofResults;
-	public HashMap<String, List<String>> queriesResults = new HashMap<String, List<String>>();
+	public LinkedHashMap<String, List<String>> queriesResults = new LinkedHashMap<String, List<String>>();
 
-	
+	public ArrayList<String> listOfReturnedResultsPerQuery = new ArrayList<String>();
 	private String openDescFilePath = "";
 	private String openDescDirPath = "";
 	private String queriesPath = "";
@@ -52,9 +52,24 @@ public class CrawlingConfig {
 	//HashSet<String> queryArray = new HashSet<String>();
 	Set<String> queryArray = new THashSet<String>();
 	HashMap<String, Integer> termFreqInClueWeb = new HashMap<String, Integer>();
+	public TextEditor textEditor = new TextEditor();
+	
+	public List<String> sentQueries = new ArrayList<String>();
 
-	List<String> sentQueries = new ArrayList<String>();
-
+	public String getLastQuery(){
+		String query = "";
+		if(sentQueries.size()>0){
+			query = sentQueries.get(sentQueries.size()-1);
+			if(query.contains("+")){
+				query = query.substring(query.lastIndexOf("+")+1, query.length());
+				
+			}
+			if(query.contains("\"")){
+				query = query.replaceAll("\"", "");
+			}
+		}
+		return query;
+	} 
 	boolean extractTextFromSRPages;
 	boolean extractTextFromAllVisitedPages;
 	public boolean SaveDSextractedInfoInFile;
@@ -447,11 +462,11 @@ public class CrawlingConfig {
 	}
 
 	public void updateQueryList(String pageContent) {
-		pageContent = this.refineText(pageContent);
-		String[] tokens = tokenizer(pageContent);
+		pageContent = this.textEditor.refineText(pageContent);
+		String[] tokens = this.textEditor.tokenizer(pageContent);
 
 		for (String token : tokens) {
-			if (!token.equalsIgnoreCase("") && !this.isStopWord(token)
+			if (!token.equalsIgnoreCase("") && !this.textEditor.isRefinedQueryStopWordLength(token)
 					&& !initialQuery.contains(token)
 					&& !sentQueries.contains(token)) {// it is not used before
 				// !initialQuery.contains(token) to avoid having
@@ -479,32 +494,17 @@ public class CrawlingConfig {
 		}
 	}
 
-	public String refineText(String pageContent) {
-
-		if (pageContent.contains("\n")) {
-			pageContent = pageContent.replaceAll("\n", " ");
-		}
-		/*
-		 * if (pageContent.matches("[.,!?:;'\"-]")){ pageContent =
-		 * pageContent.replaceAll("\\p{punct}+", " "); } if
-		 * (pageContent.contains("\\p{Punct}")){ pageContent =
-		 * pageContent.replaceAll("\\p{Punct}", " "); }
-		 */
-		if (pageContent.contains("\\") || pageContent.contains(":")
-				|| pageContent.contains(";") || pageContent.contains(".")) {
-			pageContent = pageContent.replaceAll("\\p{Punct}", " ");
-		}
-		return pageContent.trim();
-	}
-
-	private String[] tokenizer(String content) {
-		String delims = "[+\\-*/\\^ .,?!:;=()]+";
-		String[] tokens = content.split(delims);
-		return tokens;
-	}
-	
+		
 	public void addQuery(String query){
+		if(query.contains("+")){
+			query = query.substring(query.lastIndexOf("+")+1, query.length());
+			
+		}
+		if(query.contains("\"")){
+			query = query.replaceAll("\"", "");
+		}
 		sentQueries.add(query.intern());
+		fbBasedQueryGenerator.sentQueries.add(query);
 		querySet.put(query.intern(), 0);
 		System.out.println("New query, number " + queryIndex + " : " + query);
 		queryIndex++;
@@ -532,7 +532,7 @@ public class CrawlingConfig {
 				firstQuery = false;
 			} else if (this.querySelectionApproach == this.leastFromLast) {
 				query = fbBasedQueryGenerator
-						.setNextQueryLeastFromLast(initialQuery);
+						.setNextQueryLeastFromLast(initialQuery, this.isIndexed, listOfReturnedResultsPerQuery, this.cache);
 				if (query != null) {
 					sentQueries.add(query.intern());
 					querySet.put(query.intern(), 0);
@@ -542,7 +542,7 @@ public class CrawlingConfig {
 				}
 			} else if (this.querySelectionApproach == this.mostFreqFeedbackText) {
 				query = fbBasedQueryGenerator.getMostFreqQuery(querySet,
-						initialQuery);// .getLeastFreqQuery(querySet,
+						initialQuery, this.isIndexed, this.cache);// .getLeastFreqQuery(querySet,
 										// initialQuery);
 				sentQueries.add(query.intern());
 				querySet.put(query.intern(), 0);
@@ -550,7 +550,7 @@ public class CrawlingConfig {
 				saveMostFreqTable();
 			} else if (this.querySelectionApproach == this.leastFreqFeedbackText) {
 				query = fbBasedQueryGenerator.getLeastFreqQuery(querySet,
-						initialQuery);// .getLeastFreqQuery(querySet,
+						initialQuery, this.isIndexed, this.cache);// .getLeastFreqQuery(querySet,
 										// initialQuery);
 				sentQueries.add(query.intern());
 				querySet.put(query.intern(), 0);
@@ -598,7 +598,7 @@ public class CrawlingConfig {
 			} else if (queryIndex < queries.size()) {
 				query = queries.get(queryIndex);
 				if (!currentSiteDescription.isAcceptsStopWords()) {
-					if (isStopWord(query)) {
+					if (textEditor.isRefinedQueryStopWordLength(query)) {
 						queryIndex++;
 						return setNextQuery();
 					}
@@ -746,21 +746,6 @@ public class CrawlingConfig {
 	 * 
 	 * return null; }
 	 */
-	private boolean isStopWord(String query) {
-		if (listOfStopWords == null) {
-			setListOfStopWords();
-		}
-		if (query.length() < 2) {
-			return true;
-		}
-		if (query.matches(".*\\d.*")) {
-			return true;
-		}
-		if (listOfStopWords.contains(query)) {
-			return true;
-		}
-		return false;
-	}
 
 	public String setTestQuery(String query) {
 		String url = currentSiteDescription.getTemplate().replace("{q}", query);
@@ -815,111 +800,6 @@ public class CrawlingConfig {
 
 	public void setQueryIndex(int queryIndex) {
 		this.queryIndex = queryIndex;
-	}
-
-	public Set<String> setListOfStopWords() {
-		listOfStopWords = new THashSet<String>();
-		listOfStopWords.add("the");
-		listOfStopWords.add("a");
-		listOfStopWords.add("an");
-		listOfStopWords.add("of");
-		listOfStopWords.add("in");
-		listOfStopWords.add("and");
-		listOfStopWords.add("is");
-		listOfStopWords.add("to");
-		listOfStopWords.add("at");
-		listOfStopWords.add("on");
-		listOfStopWords.add("as");
-		listOfStopWords.add("not");
-		listOfStopWords.add("from");
-		listOfStopWords.add("by");
-		listOfStopWords.add("for");
-
-		listOfStopWords.add("het");
-		listOfStopWords.add("de");
-		listOfStopWords.add("en");
-		listOfStopWords.add("met");
-		listOfStopWords.add("andere");
-		listOfStopWords.add("tussen");
-		listOfStopWords.add("van");
-		listOfStopWords.add("een");
-		listOfStopWords.add("pagina");
-		listOfStopWords.add("deze");
-
-		listOfStopWords.add("have");
-		listOfStopWords.add("had");
-		listOfStopWords.add("will");
-		listOfStopWords.add("would");
-		listOfStopWords.add("there");
-		listOfStopWords.add("with");
-		listOfStopWords.add("wikipedia");
-		listOfStopWords.add("wikimedia");
-		listOfStopWords.add("also");
-		listOfStopWords.add("org");
-		listOfStopWords.add("here");
-		listOfStopWords.add("there");
-		listOfStopWords.add("data");
-		listOfStopWords.add("that");
-		listOfStopWords.add("this");
-		listOfStopWords.add("these");
-		listOfStopWords.add("those");
-		listOfStopWords.add("me");
-		listOfStopWords.add("her");
-		listOfStopWords.add("his");
-		listOfStopWords.add("world");
-		listOfStopWords.add("at");
-		listOfStopWords.add("was");
-		listOfStopWords.add("were");
-		listOfStopWords.add("page");
-		listOfStopWords.add("new");
-		listOfStopWords.add("all");
-		listOfStopWords.add("also");
-		listOfStopWords.add("public");
-		listOfStopWords.add("next");
-		listOfStopWords.add("last");
-		listOfStopWords.add("book");
-		listOfStopWords.add("than");
-		listOfStopWords.add("which");
-		listOfStopWords.add("when");
-		listOfStopWords.add("see");
-		listOfStopWords.add("many");
-		listOfStopWords.add("has");
-		listOfStopWords.add("are");
-		listOfStopWords.add("com");
-		listOfStopWords.add("or");
-		listOfStopWords.add("more");
-		listOfStopWords.add("be");
-		listOfStopWords.add("its");
-		listOfStopWords.add("data");
-		listOfStopWords.add("please");
-		listOfStopWords.add("http");
-		listOfStopWords.add("links");
-		listOfStopWords.add("their");
-		listOfStopWords.add("page");
-		listOfStopWords.add("about");
-		listOfStopWords.add("high");
-		listOfStopWords.add("must");
-		listOfStopWords.add("see");
-		listOfStopWords.add("book");
-		/*
-		 * String[] a = new String[]{"the", "of", "on", "and", "in", "content",
-		 * "to", "as", "have","not", "is", "will", "home", "from", "by", "on",
-		 * "wikipedia", "for", "was", "site", "this", "contains", "their", "as",
-		 * "edit", "string", "with", "there", "page", "his", also, when, org,
-		 * here, data, that, wikimedia, me, world, at, video, page, it, powered,
-		 * content, than, http, links, work, he, had, article, his, back, many,
-		 * state, please, an, free, are, software, after, or, must, january,
-		 * cache, centralauth, high, about, be, posted, expires, available, all,
-		 * travel, book, also, mail, public, internet, right, retrieved,
-		 * private, national, which, media, game, last, en, text, were, store,
-		 * new, hotels, search, en, see, changes, has, encyclopedia};
-		 */
-		return listOfStopWords;
-	}
-
-	public void setListOfStopWords(THashSet<String> listOfStopWords) {
-
-		this.listOfStopWords = listOfStopWords;
 	}
 
 	public Browser getScrShotBrowser() {
@@ -991,7 +871,7 @@ public class CrawlingConfig {
 		 * }
 		 */}
 
-	public void saveCrawlStatus(int crawledPage, String path) {// ,
+	public void saveCrawledSRPageStatus(int crawledPage, String path) {// ,
 		// synchronized (this) {
 		this.saveStringInFile(crawledPage + "", path, false);
 		// }
@@ -1009,8 +889,8 @@ public class CrawlingConfig {
 		} else {
 			this.saveStringInFile(query, this.pathToSentQueriesDoc, true);
 		}
-		this.saveStringInFile("", this.pathToVisitedPagesPerQuery, false);// remove
-		this.saveListsQueryResults(query, listOfSourcesFolders, this.pathToVisitedPagesPerQuery);																	// the
+	//	this.saveStringInFile("", this.pathToVisitedPagesPerQuery, true);// remove
+		this.saveListsQueryResults(query, listOfReturnedResultsForQuery, this.pathToVisitedPagesPerQuery);																	// the
 																			// urls
 																			// entered
 																			// for
@@ -1018,7 +898,7 @@ public class CrawlingConfig {
 																			// query
 	}
 
-	public void saveListsQueryResults(String query, ArrayList<String> list, String filePath) {
+	public void saveListsQueryResults(String query, List<String> list, String filePath) {
 		try {
 			File file = new File(filePath);
 			FileWriter fstream = new FileWriter(file, true);
@@ -1397,16 +1277,33 @@ public class CrawlingConfig {
 			while ((line = in.readLine()) != null) {
 				// String line = in.readLine();
 				if(line.startsWith("query::")){
-					if(resultsPerQuery.size() == 0 && !query.equals("")){
+					if(resultsPerQuery.size() != 0 && !query.equals("")){
 						//if it is not the first query
-						this.queriesResults.put(query, resultsPerQuery);
+						List<String> temp = new ArrayList<String>();
+						temp.addAll(resultsPerQuery);
+						this.queriesResults.put(query, temp);
 						resultsPerQuery.clear();
 					}
+					
 					query = line.replace("query::","");
+					if(query.contains("+")){
+						query = query.substring(query.lastIndexOf("+")+1, query.length());
+						
+					}
+					if(query.contains("\"")){
+						query = query.replaceAll("\"", "");
+					}
 				}else if(line.startsWith("returnedresult::")){
 					String resultLink = line.replace("returnedresult::", "");
 					resultsPerQuery.add(resultLink);
 				}
+			}
+			if(resultsPerQuery.size() != 0 && !query.equals("")){//to put the last one
+				//if it is not the first query
+				List<String> temp = new ArrayList<String>();
+				temp.addAll(resultsPerQuery);
+				this.queriesResults.put(query, temp);
+				resultsPerQuery.clear();
 			}
 			in.close();
 			fstream.close();

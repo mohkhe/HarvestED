@@ -40,7 +40,7 @@ public class CommonFunctionsClass {
 		// from, by, on, wikipedia, for, was, site]
 		// [the, of, on, and, in, content, to, as, have, not, is, will, home,
 		// from, by, on, wikipedia, for, was, site,
-		// this, contains, their, as, edit, string, with, there, page, his,
+		// this, contains, their, as, edit, term, with, there, page, his,
 		// also, when, org, here, data, that, wikimedia, me, world, at, video,
 		// page, it, powered, content, than, http, links, work, he, had,
 		// article, his, back, many, state, please, an, free, are, software,

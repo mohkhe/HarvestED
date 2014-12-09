@@ -3,6 +3,8 @@ package db.infiniti.crawling;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import db.infiniti.config.CrawlingConfig;
 
@@ -14,36 +16,38 @@ public class MainClass extends Thread {
 		String dataModelTable = "";
 		String dataOutputTable = "";
 		int numberOfBrowsers = 1;
-		int numberOfSelectedSourceEngineIDtoCrawl = 0;;
-		if(args.length>2){
+		int numberOfSelectedSourceEngineIDtoCrawl = 0;
+		;
+		if (args.length > 2) {
 			dataModelTable = args[0];
 			dataOutputTable = args[1];
-			try{
-				numberOfSelectedSourceEngineIDtoCrawl = Integer.parseInt(args[2]);
-			}catch(NumberFormatException eNum){
-				//TODO stop, say to enter a number
+			try {
+				numberOfSelectedSourceEngineIDtoCrawl = Integer
+						.parseInt(args[2]);
+			} catch (NumberFormatException eNum) {
+				// TODO stop, say to enter a number
 			}
-			if(args.length >3){
-				try{
+			if (args.length > 3) {
+				try {
 					numberOfBrowsers = Integer.parseInt(args[3]);
-				}catch(NumberFormatException eNum){
-					numberOfBrowsers = 5;
+				} catch (NumberFormatException eNum) {
+					numberOfBrowsers = 1;
 				}
 			}
-		}else{																																																																																																																																																																																																																																																																						
+		} else {
 			dataModelTable = "dsItemsModelXPATH";
 			dataOutputTable = "dsItemsOutputMohtry";
-			numberOfSelectedSourceEngineIDtoCrawl = 21;//0;
-			numberOfBrowsers = 6;
+			numberOfSelectedSourceEngineIDtoCrawl = 21;// 0;
+			numberOfBrowsers = 2;
 		}
-		
+
 		ArrayList<String> listOfReturnedResults = new ArrayList<String>();
 
 		String queryPoolPath = "querypool/words-15000-freq";
-		String termFreqClueWebPath = "querypool/words-15000-freq";//"querypool/wikiwebsorted";
-		//"querypool/words-2000-3000-freq";
-		//"querypool/words-4500-5000-freq";
-		//"querypool/words-15000-freq";
+		String termFreqClueWebPath = "querypool/words-15000-freq";// "querypool/wikiwebsorted";
+		// "querypool/words-2000-3000-freq";
+		// "querypool/words-4500-5000-freq";
+		// "querypool/words-15000-freq";
 		// complete list in /media/DATA/pool/webwords/wikiwebsorted
 		// not needed if reading from DB
 		String openDescFileDirPath = "websources/DT01/";
@@ -56,31 +60,33 @@ public class MainClass extends Thread {
 		crawlingConfig = new CrawlingConfig();
 
 		crawlingConfig.setTermFreqInClueWeb(termFreqClueWebPath);
-	//	crawlingConfig.setWebTools(new WebTools());
+		// crawlingConfig.setWebTools(new WebTools());
 		// to extract pages and the content
 
 		crawlingConfig.setUnPauseCrawl(false);// restart crawl
 
 		crawlingConfig.setExtractTextFromAllVisitedPages(false);
 		crawlingConfig.setExtractTextFromSRPages(false);
-		
+
 		crawlingConfig.setExtractDataFromDPageS(false);
 		crawlingConfig.setSaveDSextractedInfoInFile(false);
 		crawlingConfig.setOutputDataBase("mydatafactory");
 		crawlingConfig.setTableName(dataOutputTable);
 		// data output table name
-		crawlingConfig.setDataModelTable(dataModelTable);//"simpledatamodel");//dsItemsModelXPATH");//dsItemsModelXPATH
+		crawlingConfig.setDataModelTable(dataModelTable);// "simpledatamodel");//dsItemsModelXPATH");//dsItemsModelXPATH
 		// data model table to extract detailed pages
-		crawlingConfig.setQuerySelectionApproach(crawlingConfig.combinedLFL_PLW);
-		//PredefinedlistOfWords - mostFreqFeedbackText - browsing - leastFromLast - leastFreqFeedbackText - combinedLFL_PLW
+		crawlingConfig
+				.setQuerySelectionApproach(crawlingConfig.leastFreqFeedbackText);
+		// PredefinedlistOfWords - mostFreqFeedbackText - browsing -
+		// leastFromLast - leastFreqFeedbackText - combinedLFL_PLW
 		crawlingConfig.setQueries(queryPoolPath);
-		//crawlingConfig.setInitialQuery(Arrays.asList("brinksma"//,"company")
-         //       ));
-        crawlingConfig.setInitialQuery(Arrays.asList("vitol"));
-        crawlingConfig.setIndexed(true);
-        crawlingConfig.setHave_words_in_memory(false);
-		
-        @SuppressWarnings("unused")
+		// crawlingConfig.setInitialQuery(Arrays.asList("brinksma"//,"company")
+		// ));
+		crawlingConfig.setInitialQuery(Arrays.asList("vitol"));
+		crawlingConfig.setIndexed(true);
+		crawlingConfig.setHave_words_in_memory(false);
+
+		@SuppressWarnings("unused")
 		int totalNumOfWebsites = 0;
 		if (!readFromDB) {// read from openFIleDS or DB
 			crawlingConfig.setOpenDescDirPath(openDescFileDirPath);
@@ -92,14 +98,12 @@ public class MainClass extends Thread {
 			totalNumOfWebsites = crawlingConfig.getListOfWebsites().size();
 		}
 
-
-		//FedwebCrawler crawlingThread;
+		// FedwebCrawler crawlingThread;
 		CrawlerSellenium crawlingThreadTest;
-		for (int numberOfCrawledSources = numberOfSelectedSourceEngineIDtoCrawl; 
-				numberOfCrawledSources < numberOfSelectedSourceEngineIDtoCrawl+1; numberOfCrawledSources++) {//totalNumOfWebsites
+		for (int numberOfCrawledSources = numberOfSelectedSourceEngineIDtoCrawl; numberOfCrawledSources < numberOfSelectedSourceEngineIDtoCrawl + 1; numberOfCrawledSources++) {// totalNumOfWebsites
 			System.out.println("Number Of Crawled Sources: "
 					+ numberOfCrawledSources);
-		
+
 			if (!readFromDB) {// setting for each of the websources
 				crawlingConfig.setOpenDescFilePath(numberOfCrawledSources);
 				crawlingConfig.setCollectionName();
@@ -110,16 +114,19 @@ public class MainClass extends Thread {
 						numberOfCrawledSources);
 				crawlingConfig.setCollectionName(crawlingConfig
 						.getCurrentSiteDescription().getName());
-				//crawlingConfig.setCollectionName("google.com.brinksma");
+				// crawlingConfig.setCollectionName("google.com.brinksma");
 			}
-		//	crawlingConfig.setWebTools(new WebTools());// to extract pages and
-														// the content
+			// crawlingConfig.setWebTools(new WebTools());// to extract pages
+			// and
+			// the content
 			System.out.println("Collection name: "
 					+ crawlingConfig.getCollectionName());
-			crawlingConfig.setScrShotBrowser(crawlingConfig.getCollectionName(), 
-					"crawledData/"+crawlingConfig.getCollectionName()+"/"+"popupsaved/");
+			crawlingConfig.setScrShotBrowser(
+					crawlingConfig.getCollectionName(), "crawledData/"
+							+ crawlingConfig.getCollectionName() + "/"
+							+ "popupsaved/");
 			crawlingConfig.setDetailedPageBrowsers(numberOfBrowsers);
-			
+
 			makeCrawledDataFolder();
 			crawlingConfig
 					.setLinkContentSavePath("crawledData" + "/"
@@ -129,9 +136,11 @@ public class MainClass extends Thread {
 					.setCrawlStatusPath("crawledData" + "/"
 							+ crawlingConfig.getCollectionName() + "/"
 							+ "crawlstatus/");
-			
-			crawlingConfig.setCache("crawledData/"+crawlingConfig.getCollectionName()+"/"+"cache/", crawlingConfig.isIndexed());
-			
+
+			crawlingConfig.setCache(
+					"crawledData/" + crawlingConfig.getCollectionName() + "/"
+							+ "cache/", crawlingConfig.isIndexed());
+
 			crawlingConfig.setPathToVisitedPagesDoc(crawlingConfig
 					.getCrawlStatusPath() + "visited-pages");
 			crawlingConfig.setPathToAllDOwnloadedPages(crawlingConfig
@@ -154,7 +163,7 @@ public class MainClass extends Thread {
 					.getCrawlStatusPath() + "number-repetitions");
 			crawlingConfig.setPathToNumberOfSentQueries(crawlingConfig
 					.getCrawlStatusPath() + "number-sent-queries");
-			
+
 			crawlingConfig.setQueriesSearchResults();
 			// crawlingThread = new FedwebCrawler(crawlingConfig,
 			// listOfReturnedResults);
@@ -187,8 +196,8 @@ public class MainClass extends Thread {
 		} else {
 			System.err.println("crawledData folder is not present.");
 		}
-		
-		file = new File(filePath+"/"+crawlingConfig.getCollectionName());
+
+		file = new File(filePath + "/" + crawlingConfig.getCollectionName());
 		if (file.exists()) {
 		} else if (file.mkdir()) {
 			System.out.println("CollectionName folder is set.");

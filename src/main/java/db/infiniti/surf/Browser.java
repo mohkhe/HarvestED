@@ -299,6 +299,7 @@ public class Browser {
 			// close the page if even closing command takes longer than supposed
 			if (thStopGetPageSource.isAlive()) {
 				driver.close();
+				System.out.println("Browser is closed.");
 				this.setDriver();
 			}
 			totalStopTime = totalStopTime + System.currentTimeMillis() - time2;
@@ -502,6 +503,8 @@ public class Browser {
 	public void stopFXDriver() {
 		try {
 			this.driver.close();
+			System.out.println("Browser is closed.");
+
 		} catch (UnreachableBrowserException e) {
 			System.out.println("driver.close() + UnreachableBrowserException");
 		} catch (Exception ex) {
@@ -604,6 +607,7 @@ public class Browser {
 			// close the page if even closing command takes longer than supposed
 			if (thStopGetPageSource.isAlive()) {
 				driver.close();
+				System.out.println("Browser is closed.");
 				this.setDriver();
 			}
 		}
