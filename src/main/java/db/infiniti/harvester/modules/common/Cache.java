@@ -12,6 +12,7 @@ import java.util.Iterator;
 import org.apache.lucene.queryParser.ParseException;
 
 import db.infiniti.config.IndexesConfig;
+import db.infiniti.config.IndexesConfigLowVersionLucene;
 
 public class Cache {
 
@@ -20,8 +21,8 @@ public class Cache {
 	FileWriter fstream;
 	String cacheMapDirectoryPath;
 	String cacheMapFilePath;
-	public IndexesConfig indexOld;
-	public IndexesConfig indexNew;
+	public IndexesConfigLowVersionLucene indexOld;
+	public IndexesConfigLowVersionLucene indexNew;
 	public String textOfURL = "";
 	public String sourceCodeOfURL = "";
 
@@ -89,11 +90,12 @@ public class Cache {
 		}
 	}
 
-	public void saveInCache(String URL, String pageContent, String pageHTML,
+	public synchronized void saveInCache(String URL, String pageContent, String pageHTML,
 			boolean isIndexed) {
 		if (isIndexed) {
 			if ((!pageContent.equals(""))
 					|| pageContent.equalsIgnoreCase("error")) {
+				indexOld.index(URL, pageContent, pageHTML);
 				indexNew.index(URL, pageContent, pageHTML);
 			} else {
 				System.out.println("Empty text or error in extracting " + URL);
@@ -127,7 +129,22 @@ public class Cache {
 		}
 	}
 
-	public boolean existsAlreadyInCacheOrIndex(String url, boolean isIndexed) {
+	public boolean saveInNewIndex(String url, boolean isIndexed) {
+		if (isIndexed) {
+			if (indexOld.searchIndex(url, "url")) {
+				textOfURL = indexOld.textOfURL;
+				sourceCodeOfURL = indexOld.sourceCodeOfURL;
+				if (!indexNew.searchIndex(url, "url")) {
+					indexNew.index(url, textOfURL, sourceCodeOfURL);
+				}
+				return true;
+			}
+
+		}
+		return false;
+	}
+	
+	public synchronized boolean existsAlreadyInCacheOrIndex(String url, boolean isIndexed) {
 		if (isIndexed) {
 			if (indexOld.searchIndex(url, "url")) {
 				textOfURL = indexOld.textOfURL;
@@ -139,6 +156,7 @@ public class Cache {
 			} else if (indexNew.searchIndex(url, "url")) {
 				textOfURL = indexOld.textOfURL;
 				sourceCodeOfURL = indexOld.sourceCodeOfURL;
+				indexOld.index(url, textOfURL, sourceCodeOfURL);
 				return true;
 			} else {
 				return false;
@@ -234,12 +252,12 @@ public class Cache {
 		}
 	}
 
-	public void setIndexOld() {
-		indexOld = new IndexesConfig("index/pages");
+	public void setIndexOld(String path) {
+		indexOld = new IndexesConfigLowVersionLucene(path);
 	}
 
-	public void setIndexNew() {
-		indexNew = new IndexesConfig("newindex/pages");
+	public void setIndexNew(String path) {
+		indexNew = new IndexesConfigLowVersionLucene(path);
 
 	}
 }

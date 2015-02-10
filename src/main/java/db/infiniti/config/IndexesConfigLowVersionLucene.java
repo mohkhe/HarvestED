@@ -36,7 +36,7 @@ import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.LockObtainFailedException;
 import org.apache.lucene.store.NativeFSLockFactory;
 
-public class IndexesConfig {
+public class IndexesConfigLowVersionLucene {
 	ArrayList<String> listURLsNotDownloadedButInCache = new ArrayList<String>();
 	public Directory indexDirectory;
 	// public String indexDirectoryPath = "";
@@ -53,7 +53,7 @@ public class IndexesConfig {
 	
 	// CorruptIndexException, LockObtainFailedException, IOException,
 	// ParseException
-	public IndexesConfig(String indexDirectoryPath) {
+	public IndexesConfigLowVersionLucene(String indexDirectoryPath) {
 		// create some index
 		// we could also create an index in our ram ...
 		// Directory index = new RAMDirectory();
@@ -151,7 +151,7 @@ public class IndexesConfig {
 		System.out.println("index generated");
 	}
 
-	public void index(String url, String text, String htmlCode) {
+	public synchronized void index(String url, String text, String htmlCode) {
 		Document doc = new Document();
 		doc.add(new Field("url", url, Field.Store.YES, Field.Index.NOT_ANALYZED));
 		doc.add(new Field("text", text, Field.Store.YES, Field.Index.ANALYZED,
@@ -364,6 +364,28 @@ public class IndexesConfig {
 		return mostFrerqTerm;
 	}
 	
+	public String getSpecificFreqTermInIndex(int KIntopK, ArrayList<String> sentQueries, int specificFrec, boolean allranges){
+		IndexReader indexReader = null;
+		try {
+			indexReader = IndexReader.open(indexDirectory);
+		} catch (CorruptIndexException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		String mostFrerqTerm = "";
+		try {
+			mostFrerqTerm = freqTermsFinderInIndex.SpecificFreqTerms(indexDirectory, analyzer, indexReader, KIntopK, sentQueries,specificFrec, allranges);
+			indexReader.close();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return mostFrerqTerm;
+	}
+	
 	public String getLeastFreqTermInIndex(int KIntopK, ArrayList<String> sentQueries){
 		IndexReader indexReader = null;
 		try {
@@ -384,29 +406,6 @@ public class IndexesConfig {
 			e.printStackTrace();
 		}
 		return lowFrerqTerm;
-	}
-
-	public String getSpecificFreqTermInIndex(int KIntopK,
-			ArrayList<String> sentQueries, int specificFreq, boolean allranges) {
-		IndexReader indexReader = null;
-		try {
-			indexReader = IndexReader.open(indexDirectory);
-		} catch (CorruptIndexException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		String specificFrerqTerm = "";
-		try {
-			specificFrerqTerm = freqTermsFinderInIndex.SpecificFreqTerms(indexDirectory, analyzer, indexReader, KIntopK, sentQueries, specificFreq, allranges);
-			indexReader.close();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return specificFrerqTerm;
 	}
 
 }

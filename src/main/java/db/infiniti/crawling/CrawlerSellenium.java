@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -34,11 +33,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.html.HTMLAnchorElement;
 
 import ExcelWritePack.ExcelWriter;
-import db.infiniti.config.CrawlingConfig;
-import db.infiniti.config.CrawlingReportDS;
-import db.infiniti.sitedescription.WebsiteDS;
-import db.infiniti.surf.Browser;
-import db.infiniti.xpath.ResultLinkXpathFinder;
 /*needs htmlUnit 
  * import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
  import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
@@ -47,7 +41,12 @@ import db.infiniti.xpath.ResultLinkXpathFinder;
 
  import db.infiniti.config.DetailedInfoXPathDetectionDS;*/
 import db.infiniti.config.CrawledLinkDS;
+import db.infiniti.config.CrawlingConfig;
+import db.infiniti.config.CrawlingReportDS;
 import db.infiniti.config.QueryResStatistics;
+import db.infiniti.sitedescription.WebsiteDS;
+import db.infiniti.surf.Browser;
+import db.infiniti.xpath.ResultLinkXpathFinder;
 
 /**
  * @author mohammadreza
@@ -57,9 +56,11 @@ import db.infiniti.config.QueryResStatistics;
 public class CrawlerSellenium {
 
 	ArrayList<String> listOfAllDownloadedReturnedResults = new ArrayList<String>();
-	ArrayList<String> listOfAllReturnedResults;
+	//ArrayList<String> listOfAllReturnedResults;
 	ArrayList<String> listOfReturnedResultsPerQuery;
 
+	int pauseForSendingQueriesTime = 30;
+	
 	String url = "";
 	String searchResultlink;
 	String sourceURL;
@@ -115,7 +116,7 @@ public class CrawlerSellenium {
 	public CrawlerSellenium(CrawlingConfig crawlingConfig,
 			ArrayList<String> listOfReturnedResults) {
 		this.crawlingConfig = crawlingConfig;
-		this.listOfAllReturnedResults = listOfReturnedResults;
+		crawlingConfig.listOfAllReturnedResults = listOfReturnedResults;
 		crawlReport = new CrawlingReportDS();
 		queries = crawlingConfig.getQueries();
 		saveLinkPath = crawlingConfig.getLinkContentSavePath();
@@ -142,7 +143,7 @@ public class CrawlerSellenium {
 				.readLinesFromFile(crawlingConfig.pathToAllDOwnloadedPages));
 
 		if (crawlingConfig.unPauseCrawl) {
-			listOfAllReturnedResults.addAll(crawlingConfig
+			crawlingConfig.listOfAllReturnedResults.addAll(crawlingConfig
 					.readLinesFromFile(crawlingConfig.pathToVisitedPagesDoc));
 			listOfReturnedResultsPerQuery
 					.addAll(crawlingConfig
@@ -224,6 +225,13 @@ public class CrawlerSellenium {
 				System.out.println("Link of search result page: " + url);
 
 				String pageSource = null;
+				try {
+					TimeUnit.SECONDS.sleep(pauseForSendingQueriesTime);
+				} catch (InterruptedException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+
 				if (crawlingConfig.isExtractTextFromSRPages()) {
 					pageSource = sRPagesbrowser.loadAndGetPageSource(url);
 				} else if (!url.equalsIgnoreCase("javascript clicked.")) {
@@ -269,6 +277,12 @@ public class CrawlerSellenium {
 					 * }
 					 */
 					if (crawlingConfig.isIndexed()) {
+						try {
+							TimeUnit.SECONDS.sleep(pauseForSendingQueriesTime);
+						} catch (InterruptedException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
 						pageHTMLContent = sRPagesbrowser
 								.getPageSource(searchResultlink);
 						pageContent = sRPagesbrowser
@@ -327,7 +341,7 @@ public class CrawlerSellenium {
 						crawlReport.incNoRepeatedLinks();
 					}
 					// "http://www.lexology.com/library/detail.aspx?g=45038f45-8d2a-4c5b-a4bd-fcb399a59db4";//
-					if (!listOfAllReturnedResults.contains(resultLink)) {
+					if (!crawlingConfig.listOfAllReturnedResults.contains(resultLink)) {
 						// &&
 						// crawlingConfig.cache.existsAlreadyInCache(resultLink)
 						/*
@@ -337,7 +351,7 @@ public class CrawlerSellenium {
 						 * crawlingConfig.pathToNumberOfSentQueries);
 						 */
 						crawledLinkDS.setRepeated("No");
-						listOfAllReturnedResults.add(resultLink);
+						crawlingConfig.listOfAllReturnedResults.add(resultLink);
 
 						increaseReturnedResr();// totalreturnedRes
 
@@ -451,7 +465,7 @@ public class CrawlerSellenium {
 							}
 						}, resultLink);
 						seperatedBrowser.start();
-					} else if (listOfAllReturnedResults.contains(resultLink)) {
+					} else if (crawlingConfig.listOfAllReturnedResults.contains(resultLink)) {
 						repeatedLinks++;// for one query
 						crawlReport.incNumRepeatedLinksInGeneral();
 						crawledLinkDS.setRepeated("Yes");
@@ -483,7 +497,7 @@ public class CrawlerSellenium {
 					}
 				}
 				crawlingConfig.waitTillAllBrowsersAreFree();
-				if (posedQueiesIndex > 50000) {
+				if (posedQueiesIndex > 650) {
 					continueCrawl = false;
 					stopCrawlForQuery = true;
 				}
@@ -510,7 +524,7 @@ public class CrawlerSellenium {
 					crawlReport.addQueryNumberofItsResults(
 							crawlingConfig.query,
 							(crawlingConfig.getQueryIndex() - 1),
-							listOfAllReturnedResults.size(),
+							crawlingConfig.listOfAllReturnedResults.size(),
 							crawlReport.getNumRepeatedLinks(), repeatedLinks,
 							totalreturnedResForQuery);
 					printQueriesResults("crawledData/"
@@ -553,7 +567,7 @@ public class CrawlerSellenium {
 								// 1),
 								crawlingConfig.query,
 								(crawlingConfig.getQueryIndex() - 1),
-								listOfAllReturnedResults.size(),
+								crawlingConfig.listOfAllReturnedResults.size(),
 								crawlReport.getNumRepeatedLinks(),
 								repeatedLinks, totalreturnedResForQuery);
 
@@ -570,7 +584,7 @@ public class CrawlerSellenium {
 
 						if (this.nextResultPagexPath == null) {
 							// for the web sites without any next button
-							if (posedQueiesIndex > 300) {
+							if (posedQueiesIndex > 650) {
 								continueCrawl = false;
 							}
 						}
@@ -1061,7 +1075,7 @@ public class CrawlerSellenium {
 	public void stopThread() {
 		// listOfReturnedResults reset
 		// represents links extracted only for one web source
-		listOfAllReturnedResults.clear();
+		crawlingConfig.listOfAllReturnedResults.clear();
 		this.nextResultPagexPath = null;
 	}
 
@@ -1504,13 +1518,13 @@ public class CrawlerSellenium {
 		this.listOfReturnedResultsPerQuery.clear();
 		this.listOfReturnedResultsPerQuery.trimToSize();
 		this.listOfReturnedResultsPerQuery.addAll(listOfResultsForQuery);
-		for (String resutlLink : listOfResultsForQuery) {
+		for (String resultLink : listOfResultsForQuery) {
 			totalreturnedResForQuery++;
-			if (!listOfAllReturnedResults.contains(resutlLink)) {
-				listOfAllReturnedResults.add(resutlLink);
+			if (!crawlingConfig.listOfAllReturnedResults.contains(resultLink)) {
+				crawlingConfig.listOfAllReturnedResults.add(resultLink);
 
 				increaseReturnedResr();// totalreturnedRes
-			} else if (listOfAllReturnedResults.contains(resutlLink)) {
+			} else if (crawlingConfig.listOfAllReturnedResults.contains(resultLink)) {
 				repeatedLinks++;// for one query
 				crawlReport.incNumRepeatedLinksInGeneral();
 				crawlReport.incNoRepeatedLinks();
@@ -1521,10 +1535,16 @@ public class CrawlerSellenium {
 				repeatedLinks++;// for one query
 
 			}
+			//only if present in old index
+			//for least most freq purposes
+			crawlingConfig.cache
+			.saveInNewIndex(
+					resultLink,
+					crawlingConfig.isIndexed());
 		}
 		crawlReport.addQueryNumberofItsResults(crawlingConfig.query,
 				(crawlingConfig.getQueryIndex() - 1),
-				listOfAllReturnedResults.size(),
+				crawlingConfig.listOfAllReturnedResults.size(),
 				crawlReport.getNumRepeatedLinks(), repeatedLinks,
 				totalreturnedResForQuery);
 		printQueriesResults("crawledData/" + crawlingConfig.getCollectionName()

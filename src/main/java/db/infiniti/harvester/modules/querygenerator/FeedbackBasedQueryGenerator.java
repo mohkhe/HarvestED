@@ -84,7 +84,7 @@ public class FeedbackBasedQueryGenerator {
 	}
 
 	public String setNextQueryLeastFromLast(List<String> initialQuery,
-			boolean isIndexed, ArrayList<String> listOfReturnedResultsPerQuery,
+			boolean isIndexed, List<String> listOfReturnedResultsPerQuery,
 			Cache cache) {
 		String nextQuery = null;
 		int temp = 0;
@@ -92,6 +92,10 @@ public class FeedbackBasedQueryGenerator {
 		Iterator<Integer> docNum;
 		if (isIndexed) {
 			// String textOfLastPage = "";
+			String query = "";
+			if(listOfReturnedResultsPerQuery == null){
+				return null;
+			}
 			int index = listOfReturnedResultsPerQuery.size();
 			boolean foundLastPageInQueryResultsPresentInCache = false;
 			boolean foundQuery = false;
@@ -112,10 +116,14 @@ public class FeedbackBasedQueryGenerator {
 							.searchIndexReturnFreqTerms(
 									listOfReturnedResultsPerQuery.get(index),
 									"url");
-					String query = leastFreqInTermFreqVector(termFreqDoc);
-					if (!query.equalsIgnoreCase("") && query != null) {
-						foundQuery = true;
-						return query;
+					if(termFreqDoc!= null && termFreqDoc.size()>0){
+						query = leastFreqInTermFreqVector(termFreqDoc);
+						if (!query.equalsIgnoreCase("") && query != null) {
+							foundQuery = true;
+							return query;
+						}else{
+							foundLastPageInQueryResultsPresentInCache = false;//this was empty, try aniother one
+						}
 					}
 				}
 			}
@@ -198,10 +206,57 @@ public class FeedbackBasedQueryGenerator {
 				query = entries.get(i).getKey();
 			}
 		}
-		int freq = entries.get(i).getValue();
+	//	int freq = entries.get(i).getValue();
 		return query;
 	}
+	public String setNextQueryIn_Correlation(TObjectIntHashMap<String> querySet,
+			List<String> initialQuery, boolean isIndexed, Cache cache, int specificFreq) {
+		if (!isIndexed) {
+			List<String> mapKeys = new ArrayList<String>(querySet.keySet());
+			// List<Integer> mapValues = new
+			// ArrayList<Integer>(querySet.values());
+			int[] mapValues = querySet.values();
+			// Collections.sort(mapValues, Collections.reverseOrder());
 
+			// Iterator<Integer> valueIt = mapValues.iterator();
+			// TODO check if this is the most frequent and not the least
+			// frequent
+
+			int val = Integer.MIN_VALUE;
+			for (int j : mapValues) {
+				if (j > val) {
+					val = j;
+				}
+			}
+
+			// int val = (Integer) valueIt.next();
+			Iterator<String> keyIt = mapKeys.iterator();
+			while (keyIt.hasNext()) {
+				String key = (String) keyIt.next();
+				int comp1 = querySet.get(key);
+
+				if (comp1 == val && !initialQuery.contains(key)) {
+					sentQueries.add(key);
+					sentQueries.trimToSize();
+					QueryStatisticDS queryStat = new QueryStatisticDS(key);
+					queryStat.setFreqInAllReturnedDocsForQuery(val);
+					queryStat
+							.setDocumentsQueryAppearedIn(termDocumentDistribution
+									.get(key));
+					queriesStatMap.put(key.intern(), queryStat);
+
+					return key;
+				}
+			}
+		} else {
+			String specificFreqQuery = cache.indexNew.getSpecificFreqTermInIndex(10,
+					sentQueries, specificFreq, false);
+			sentQueries.add(specificFreqQuery);
+			sentQueries.trimToSize();
+			return specificFreqQuery;
+		}
+		return null;
+	}
 	public String setNextQueryIn_Feedback_ClueWeb(List<String> initialQuery,
 			Set<String> queryArray,
 			HashMap<String, Integer> termFreqInClueWeb2, boolean isIndexed,
@@ -347,11 +402,11 @@ public class FeedbackBasedQueryGenerator {
 				}
 			}
 		} else {
-			String mostFreqQuery = cache.indexNew.getLeastFreqTermInIndex(20,
+			String leastFreqQuery = cache.indexNew.getLeastFreqTermInIndex(20,
 					sentQueries);
-			sentQueries.add(mostFreqQuery);
+			sentQueries.add(leastFreqQuery);
 			sentQueries.trimToSize();
-			return mostFreqQuery;
+			return leastFreqQuery;
 		}
 
 		return null;

@@ -1,4 +1,4 @@
-package db.infiniti.config;
+/*package db.infiniti.config;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -15,55 +15,58 @@ import net.htmlparser.jericho.Renderer;
 import net.htmlparser.jericho.Segment;
 import net.htmlparser.jericho.Source;
 
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.CorruptIndexException;
+import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.IndexWriterConfig.OpenMode;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermFreqVector;
-import org.apache.lucene.queryParser.MultiFieldQueryParser;
-import org.apache.lucene.queryParser.ParseException;
+import org.apache.lucene.index.Terms;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.TopDocCollector;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.LockObtainFailedException;
 import org.apache.lucene.store.NativeFSLockFactory;
+import org.apache.lucene.util.Version;
 
-public class IndexesConfig {
+public class IndexesConfigRecentVersionLucene {
 	ArrayList<String> listURLsNotDownloadedButInCache = new ArrayList<String>();
 	public Directory indexDirectory;
 	// public String indexDirectoryPath = "";
 
-	public StandardAnalyzer analyzer = new StandardAnalyzer();
+	Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_4_10_0);
 	public IndexWriter w;
 	public HashMap<String, String> urlsFileNames;
 	public HashMap<String, String> emptyFiles;
 	public String textOfURL = "";
 	public String sourceCodeOfURL = "";
 	public int docId = 0;
-	public String indexName = "";
+	public String indexPath = "";
 	public HighFreqTerms freqTermsFinderInIndex= new HighFreqTerms();
 	
 	// CorruptIndexException, LockObtainFailedException, IOException,
 	// ParseException
-	public IndexesConfig(String indexDirectoryPath) {
+	public IndexesConfigRecentVersionLucene(String indexDirectoryPath) {
 		// create some index
 		// we could also create an index in our ram ...
 		// Directory index = new RAMDirectory();
-		indexName = indexDirectoryPath;
+		indexPath = indexDirectoryPath;
+		IndexWriterConfig iwc = new IndexWriterConfig(Version.LUCENE_4_10_0, analyzer);
+		iwc.setOpenMode(OpenMode.CREATE_OR_APPEND);
 		try {
-			indexDirectory = FSDirectory.getDirectory(indexDirectoryPath);// "index/pages"
+			indexDirectory = FSDirectory.open(new File(indexDirectoryPath));// "index/pages"
 			indexDirectory.setLockFactory(new NativeFSLockFactory(
 					indexDirectoryPath));
-			w = new IndexWriter(indexDirectory, analyzer,
-					IndexWriter.MaxFieldLength.UNLIMITED);
+			w = new IndexWriter(indexDirectory, iwc);
 		} catch (CorruptIndexException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -164,7 +167,7 @@ public class IndexesConfig {
 		try {
 			w.addDocument(doc);
 			w.commit();
-			w.flush();
+		//	w.flush();
 			int n = w.numDocs();
 			System.out.print(n);
 		} catch (IOException e) {
@@ -206,14 +209,14 @@ public class IndexesConfig {
 		return textOfURL;
 	}
 
-	public TermFreqVector searchIndexReturnFreqTerms(String searchString,
+	public Terms searchIndexReturnFreqTerms(String searchString,
 			String termString) {
 		System.out.println("Searching for '" + searchString + "'");
 		// Directory directory = FSDirectory.getDirectory();
 		IndexReader indexReader;
-		TermFreqVector termFreqDoc = null;
+		Terms termFreqDoc = null;
 		try {
-			indexReader = IndexReader.open(indexDirectory);
+			indexReader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
 			IndexSearcher indexSearcher = new IndexSearcher(indexReader);
 			Term term = new Term(termString, searchString);
 			TermQuery query = new TermQuery(term);
@@ -225,7 +228,7 @@ public class IndexesConfig {
 			//	textOfURL = doc.get("text");
 				// sourceCodeOfURL = doc.get("html");
 			//	this.docId = docID;
-				termFreqDoc = indexReader.getTermFreqVector(docId, "text");
+				termFreqDoc = indexReader.getTermVector(docId, "text");
 		        
 			}
 		} catch (CorruptIndexException e) {
@@ -243,7 +246,7 @@ public class IndexesConfig {
 		// Directory directory = FSDirectory.getDirectory();
 		IndexReader indexReader;
 		try {
-			indexReader = IndexReader.open(indexDirectory);
+			indexReader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
 			IndexSearcher indexSearcher = new IndexSearcher(indexReader);
 			int n = w.numDocs();
 
@@ -269,7 +272,7 @@ public class IndexesConfig {
 		}
 		return false;
 
-		/*
+		
 		 * BooleanQuery bquery = new BooleanQuery(); bquery.add(query,
 		 * BooleanClause.Occur.SHOULD); // query.add(new Term("url",
 		 * searchString)); Hits hits = indexSearcher.search(bquery); PhraseQuery
@@ -280,7 +283,7 @@ public class IndexesConfig {
 		 * new QueryParser("url", analyzer); Query query2 =
 		 * queryParser.parse("\""+searchString+"\""); topDocs =
 		 * indexSearcher.search(query2, 10);
-		 */
+		 
 		// System.out.println("Number of hits: " + topDocs.totalHits);
 
 		// Iterator<Hit> it = hits.iterator();
@@ -355,7 +358,7 @@ public class IndexesConfig {
 		}
 		String mostFrerqTerm = "";
 		try {
-			mostFrerqTerm = freqTermsFinderInIndex.HighFreqTerms(indexDirectory, analyzer, indexReader, KIntopK, sentQueries);
+			mostFrerqTerm = freqTermsFinderInIndex.HighFreqTerms(indexPath, analyzer, indexReader, KIntopK, sentQueries);
 			indexReader.close();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -367,7 +370,7 @@ public class IndexesConfig {
 	public String getLeastFreqTermInIndex(int KIntopK, ArrayList<String> sentQueries){
 		IndexReader indexReader = null;
 		try {
-			indexReader = IndexReader.open(indexDirectory);
+			indexReader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));;
 		} catch (CorruptIndexException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -377,7 +380,7 @@ public class IndexesConfig {
 		}
 		String lowFrerqTerm = "";
 		try {
-			lowFrerqTerm = freqTermsFinderInIndex.LowFreqTerms(indexDirectory, analyzer, indexReader, KIntopK, sentQueries);
+			lowFrerqTerm = freqTermsFinderInIndex.LowFreqTerms(indexPath, analyzer, indexReader, KIntopK, sentQueries);
 			indexReader.close();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -386,27 +389,5 @@ public class IndexesConfig {
 		return lowFrerqTerm;
 	}
 
-	public String getSpecificFreqTermInIndex(int KIntopK,
-			ArrayList<String> sentQueries, int specificFreq, boolean allranges) {
-		IndexReader indexReader = null;
-		try {
-			indexReader = IndexReader.open(indexDirectory);
-		} catch (CorruptIndexException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		String specificFrerqTerm = "";
-		try {
-			specificFrerqTerm = freqTermsFinderInIndex.SpecificFreqTerms(indexDirectory, analyzer, indexReader, KIntopK, sentQueries, specificFreq, allranges);
-			indexReader.close();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return specificFrerqTerm;
-	}
-
 }
+*/

@@ -233,6 +233,7 @@ public class Browser {
 			public void run() {
 				String url = Thread.currentThread().getName();
 				try {
+					driver.get("");
 					driver.get(url);
 				} catch (UnreachableBrowserException e) {
 					System.out.println("UnreachableBrowserException " + url);
@@ -312,6 +313,8 @@ public class Browser {
 	public String loadAndGetPageSource(String url) {
 		// driver.navigate().to(url);
 		// String sourceText = "";
+		sourceText = "";
+		String pageText = "";
 		driverURL = url;// "http://www.quotenet.nl/Miljonairs/Klaus-de-Clercq-Zubli";
 		// url = "http://www.quotenet.nl/Miljonairs/Klaus-de-Clercq-Zubli"
 		long time = System.currentTimeMillis();
@@ -470,7 +473,14 @@ public class Browser {
 		 * se) { System.out.println("driver.getPageSource() Exception for: "); }
 		 */
 
-		return sourceText;
+		if(t.isAlive() && sourceText.equals("")){
+			System.out.println(url + " -> Could not extract text.");
+			sourceText = "";
+		}
+		pageText = sourceText;
+		sourceText = "";
+		return pageText;
+		
 
 		/*
 		 * WebDriverWait wait = new WebDriverWait(browser, new TimeSpan(time in
@@ -511,7 +521,7 @@ public class Browser {
 			System.out.println("driver.close()" + ex.toString());
 		}
 	}
-
+//used
 	public String getPageSource(String url) {
 		// driver.navigate().to(url);
 		// String sourceText = "";
@@ -519,14 +529,18 @@ public class Browser {
 		// url = "http://www.quotenet.nl/Miljonairs/Klaus-de-Clercq-Zubli"
 		driverURL = url;
 		totalStopTime = 0;
+		this.sourceText = "";
 		this.freeDriver = false;
-
+		String pageText = "";
 		long time = System.currentTimeMillis();
 
 		Thread tGetPageSource = new Thread(new Runnable() {
 			public void run() {
 				String url = Thread.currentThread().getName();
 				try {
+					if(url.endsWith(".pdf")){
+						System.out.println("pdf file.");
+					}
 					sourceText = driver.getPageSource();
 					// sourceText = getPageSourceNew(url);
 
@@ -558,7 +572,9 @@ public class Browser {
 
 		}, url);
 		tGetPageSource.start();
-
+		if(url.endsWith(".pdf")){
+			System.out.println("pdf file.");
+		}
 		try {
 			tGetPageSource.join(timeOutThread);
 		} catch (InterruptedException e) { // ignore
@@ -606,13 +622,16 @@ public class Browser {
 			}
 			// close the page if even closing command takes longer than supposed
 			if (thStopGetPageSource.isAlive()) {
+				thStopGetPageSource.stop();
 				driver.close();
 				System.out.println("Browser is closed.");
 				this.setDriver();
 			}
 		}
+		pageText = sourceText;
+		sourceText = "";
 		this.freeDriver = true;
-		return sourceText;
+		return pageText;
 	}
 
 	// not used

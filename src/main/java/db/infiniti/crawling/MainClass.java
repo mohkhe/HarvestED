@@ -38,16 +38,22 @@ public class MainClass extends Thread {
 			dataModelTable = "dsItemsModelXPATH";
 			dataOutputTable = "dsItemsOutputMohtry";
 			numberOfSelectedSourceEngineIDtoCrawl = 21;// 0;
-			numberOfBrowsers = 2;
+			numberOfBrowsers = 3;
 		}
 
 		ArrayList<String> listOfReturnedResults = new ArrayList<String>();
 
-		String queryPoolPath = "querypool/words-15000-freq";
-		String termFreqClueWebPath = "querypool/words-15000-freq";// "querypool/wikiwebsorted";
+		String queryPoolPath = "querypool/words-6milion-freq";
+		String termFreqClueWebPath = "querypool/words-6milion-freq";// "querypool/wikiwebsorted";
 		// "querypool/words-2000-3000-freq";
+		// "querypool/words-5000-freq";
+		// "querypool/words-300000-freq";
+		// "querypool/words-400000-freq";
+		// "querypool/words-500000-freq";
 		// "querypool/words-4500-5000-freq";
 		// "querypool/words-15000-freq";
+		//"querypool/words-1milion-freq"
+		//"querypool/words-6milion-freq"
 		// complete list in /media/DATA/pool/webwords/wikiwebsorted
 		// not needed if reading from DB
 		String openDescFileDirPath = "websources/DT01/";
@@ -76,13 +82,13 @@ public class MainClass extends Thread {
 		crawlingConfig.setDataModelTable(dataModelTable);// "simpledatamodel");//dsItemsModelXPATH");//dsItemsModelXPATH
 		// data model table to extract detailed pages
 		crawlingConfig
-				.setQuerySelectionApproach(crawlingConfig.leastFreqFeedbackText);
-		// PredefinedlistOfWords - mostFreqFeedbackText - browsing -
+				.setQuerySelectionApproach(crawlingConfig.correlationBased);
+		// correlationBased - PredefinedlistOfWords - mostFreqFeedbackText - browsing -
 		// leastFromLast - leastFreqFeedbackText - combinedLFL_PLW
 		crawlingConfig.setQueries(queryPoolPath);
-		// crawlingConfig.setInitialQuery(Arrays.asList("brinksma"//,"company")
+		crawlingConfig.setInitialQuery(Arrays.asList("vitol"));//,"company")
 		// ));
-		crawlingConfig.setInitialQuery(Arrays.asList("vitol"));
+		//crawlingConfig.setInitialQuery(Arrays.asList("vitol"));
 		crawlingConfig.setIndexed(true);
 		crawlingConfig.setHave_words_in_memory(false);
 
@@ -138,8 +144,7 @@ public class MainClass extends Thread {
 							+ "crawlstatus/");
 
 			crawlingConfig.setCache(
-					"crawledData/" + crawlingConfig.getCollectionName() + "/"
-							+ "cache/", crawlingConfig.isIndexed());
+					"crawledData/" + crawlingConfig.getCollectionName() , crawlingConfig.isIndexed());
 
 			crawlingConfig.setPathToVisitedPagesDoc(crawlingConfig
 					.getCrawlStatusPath() + "visited-pages");

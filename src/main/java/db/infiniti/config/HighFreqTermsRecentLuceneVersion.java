@@ -1,6 +1,6 @@
-package db.infiniti.config;
+/*package db.infiniti.config;
 
-/**
+*//**
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
@@ -15,8 +15,9 @@ package db.infiniti.config;
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ *//*
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,25 +25,25 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
+import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermDocs;
-import org.apache.lucene.index.TermEnum;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.NativeFSLockFactory;
 import org.apache.lucene.util.PriorityQueue;
 
-/**
+*//**
  * <code>HighFreqTerms class extracts the top n most frequent terms
  * (by document frequency ) from an existing Lucene index and reports their
  * document frequency.  If used with the -t flag it also reports their 
  * total tf (total number of occurences) in order of highest total tf
- */
+ *//*
 
 public class HighFreqTerms {
 
@@ -55,8 +56,8 @@ public class HighFreqTerms {
 
 	TextEditor textEditor = new TextEditor();
 
-	public String HighFreqTerms(Directory indexDirectory,
-			StandardAnalyzer analyzer, IndexReader reader, int numTerms,
+	public String HighFreqTerms(String indexPath,
+			Analyzer analyzer, IndexReader reader, int numTerms,
 			ArrayList<String> sentQueries) {
 		// indexDirectory = FSDirectory.getDirectory("index/pages");
 		// indexDirectory.setLockFactory(new
@@ -68,7 +69,7 @@ public class HighFreqTerms {
 		// setListOfStopWords();
 		String mostFreqTerm = "";
 		try {
-			reader = IndexReader.open(indexDirectory, true);
+			reader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
 		} catch (CorruptIndexException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -83,10 +84,10 @@ public class HighFreqTerms {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		/*
+		
 		 * Insert logic so it will only lookup totaltf if right arg also change
 		 * names as in flex
-		 */
+		 
 		if (terms != null) {
 			// default HighFreqTerms behavior
 
@@ -98,15 +99,12 @@ public class HighFreqTerms {
 				e.printStackTrace();
 			}
 			mostFreqTerm = termsWithTF[0].term + "";
-			if(mostFreqTerm.contains(":")){
-				mostFreqTerm = mostFreqTerm.substring(mostFreqTerm.indexOf(":")+1, mostFreqTerm.length());
-			}
 		}
 		return mostFreqTerm;
 	}
 
-	public String LowFreqTerms(Directory indexDirectory,
-			StandardAnalyzer analyzer, IndexReader reader, int numTerms,
+	public String LowFreqTerms(String indexPath,
+			Analyzer analyzer, IndexReader reader, int numTerms,
 			ArrayList<String> sentQueries) {
 		// indexDirectory = FSDirectory.getDirectory("index/pages");
 		// indexDirectory.setLockFactory(new
@@ -116,9 +114,9 @@ public class HighFreqTerms {
 		String field = "text";
 		boolean IncludeTermFreqs = false;
 		// setListOfStopWords();
-		String leasttFreqTerm = "";
+		String mostFreqTerm = "";
 		try {
-			reader = IndexReader.open(indexDirectory, true);
+			reader = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
 		} catch (CorruptIndexException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -133,167 +131,26 @@ public class HighFreqTerms {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		/*
-		 * Insert logic so it will only lookup totaltf if right arg also change
-		 * names as in flex
-		 */
-		if (terms != null) {
-			// default HighFreqTerms behavior
-
-			TermStats[] termsWithTF = null;
-			try {
-				termsWithTF = sortByTotalTermFreq(reader, terms);//sortAscendingByTotalTermFreq
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			leasttFreqTerm = termsWithTF[0].term + "";
-			if(leasttFreqTerm.contains(":")){
-				leasttFreqTerm = leasttFreqTerm.substring(leasttFreqTerm.indexOf(":")+1, leasttFreqTerm.length());
-			}
-		}
-		return leasttFreqTerm;
-	}
-
-	
-	public String SpecificFreqTerms(Directory indexDirectory,
-			StandardAnalyzer analyzer, IndexReader reader, int numTerms,
-			ArrayList<String> sentQueries, int specificFrec, boolean allranges) {
-		// indexDirectory = FSDirectory.getDirectory("index/pages");
-		// indexDirectory.setLockFactory(new
-		// NativeFSLockFactory("index/pages"));
-		// w = new IndexWriter(indexDirectory, analyzer,
-		// IndexWriter.MaxFieldLength.UNLIMITED);
-		String field = "text";
-		boolean IncludeTermFreqs = false;
-		// setListOfStopWords();
-		String specificFreqTerm = "";
-		try {
-			reader = IndexReader.open(indexDirectory, true);
-		} catch (CorruptIndexException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		TermStats[] terms = null;
-		try {
-			terms = getLowerHigherEqualSpecificFreqTerms(reader, numTerms, field, sentQueries, specificFrec, allranges);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		/*
-		 * Insert logic so it will only lookup totaltf if right arg also change
-		 * names as in flex
-		 */
-		if (terms != null) {
-			// default HighFreqTerms behavior
-
-			TermStats[] termsWithTF = null;
-			try {
-				termsWithTF = sortByTotalTermFreq(reader, terms);//sortAscendingByTotalTermFreq
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			specificFreqTerm = termsWithTF[0].term + "";
-			int i = 0;
-			while(i < termsWithTF.length){
-				System.out.println(termsWithTF[i].term + " -> \t" + termsWithTF[i].docFreq);
-				i ++;
-			}
-			if(specificFreqTerm.contains(":")){
-				specificFreqTerm = specificFreqTerm.substring(specificFreqTerm.indexOf(":")+1, specificFreqTerm.length());
-			}
-		}
-		return specificFreqTerm;
-	}
-	private TermStats[] getLowerHigherEqualSpecificFreqTerms(IndexReader reader,
-			int numTerms, String field, ArrayList<String> sentQueries, int specificFreq, boolean allranges) throws Exception {
-		// TODO Auto-generated method stub
-		TermInfoLowerFreqThanX tiqLower = new TermInfoLowerFreqThanX(numTerms, specificFreq);
-		TermInfoHigherFreqThanX tiqHigher = new TermInfoHigherFreqThanX(numTerms, specificFreq);
-		TermInfoEqualFreqThanX tiqEqual = new TermInfoEqualFreqThanX(numTerms, specificFreq);
-		if (field != null) {
-			Document aDoc = reader.document(0);
-			// reader.getTermFreqVector(0, field);
-			TermEnum terms = reader.terms(new Term(field));
-
-			do {
-				if (terms != null && terms.term() != null) {
-					String textOfTerm = terms.term().text();
-
-					if (terms.term().field().equals(field)) {
-						if (!textEditor
-								.isRefinedQueryStopWordLength(textOfTerm)
-								&& !sentQueries.contains(textOfTerm)) {
-							tiqLower.insertWithOverflow(new TermStats(terms.term(),
-									terms.docFreq()));
-							tiqHigher.insertWithOverflow(new TermStats(terms.term(),
-									terms.docFreq()));
-							if(terms.docFreq() == specificFreq){
-								tiqEqual.insertWithOverflow(new TermStats(terms.term(),
-										terms.docFreq()));
-							}
-						}
-					}
-				}
-			} while (terms.next());
-
-		} else {
-			TermEnum terms = reader.terms();
-			while (terms.next()) {
-				String textOfTerm = terms.term().text();
-				if (!textEditor
-						.isRefinedQueryStopWordLength(textOfTerm)
-						&& !sentQueries.contains(textOfTerm)) {
-					tiqLower.insertWithOverflow(new TermStats(terms.term(),
-							terms.docFreq()));
-					tiqHigher.insertWithOverflow(new TermStats(terms.term(), terms
-							.docFreq()));
-					if(terms.docFreq() == specificFreq){
-						tiqEqual.insertWithOverflow(new TermStats(terms.term(),
-								terms.docFreq()));
-					}
-				}
-			}
-		}
-		TermStats[] result;
-		int count;
-		if(allranges){
-			result = new TermStats[tiqLower.size()+tiqHigher.size()+tiqEqual.size()];
-			count = tiqHigher.size() - 1 + tiqLower.size()+tiqEqual.size();
-			while (tiqHigher.size() != 0) {
-				result[count] = (TermStats) tiqHigher.pop();
-				count--;
-			}
-			count = tiqLower.size()+tiqEqual.size()-1;
-			while (tiqEqual.size() != 0) {
-				result[count] = (TermStats) tiqEqual.pop();
-				count--;
-			}
-			count = tiqLower.size()-1;
-			while (tiqLower.size() != 0) {
-				result[count] = (TermStats) tiqLower.pop();
-				count--;
-			}
-		}else{
-			result = new TermStats[tiqEqual.size()];
-			count = tiqEqual.size()-1;
-			while (tiqEqual.size() != 0) {
-				result[count] = (TermStats) tiqEqual.pop();
-				count--;
-			}
-		}
-
-		// we want highest first so we read the queue and populate the array
-		// starting at the end and work backwards
 		
-		return result;
+		 * Insert logic so it will only lookup totaltf if right arg also change
+		 * names as in flex
+		 
+		if (terms != null) {
+			// default HighFreqTerms behavior
+
+			TermStats[] termsWithTF = null;
+			try {
+				termsWithTF = sortByTotalTermFreq(reader, terms);//sortAscendingByTotalTermFreq
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			mostFreqTerm = termsWithTF[0].term + "";
+		}
+		return mostFreqTerm;
 	}
 
-	/**
+	*//**
 	 * 
 	 * @param reader
 	 * @param numTerms
@@ -301,7 +158,7 @@ public class HighFreqTerms {
 	 * @param sentQueries
 	 * @return TermStats[] ordered by terms with highest docFreq first.
 	 * @throws Exception
-	 */
+	 *//*
 	public TermStats[] getHighFreqTerms(IndexReader reader, int numTerms,
 			String field, ArrayList<String> sentQueries) throws Exception {
 
@@ -309,7 +166,7 @@ public class HighFreqTerms {
 		if (field != null) {
 			Document aDoc = reader.document(0);
 			// reader.getTermFreqVector(0, field);
-			TermEnum terms = reader.terms(new Term(field));
+			TermEnum terms = reader.getSumTotalTermFreq(arg0).terms(new Term(field));
 
 			do {
 				if (terms != null && terms.term() != null) {
@@ -356,7 +213,7 @@ public class HighFreqTerms {
 
 		TermInfoWiTFQueueLowFreq tiq = new TermInfoWiTFQueueLowFreq(numTerms);
 		if (field != null) {
-			//Document aDoc = reader.document(0);
+			Document aDoc = reader.document(0);
 			// reader.getTermFreqVector(0, field);
 			TermEnum terms = reader.terms(new Term(field));
 
@@ -399,7 +256,7 @@ public class HighFreqTerms {
 		}
 		return result;
 	}
-	/**
+	*//**
 	 * Takes array of TermStats. For each term looks up the tf for each doc
 	 * containing the term and stores the total in the output array of
 	 * TermStats. Output array is sorted by highest total tf.
@@ -409,19 +266,14 @@ public class HighFreqTerms {
 	 *            TermStats[]
 	 * @return TermStats[]
 	 * @throws Exception
-	 */
+	 *//*
 
 	public static TermStats[] sortByTotalTermFreq(IndexReader reader,
-			TermStats[] terms) {
+			TermStats[] terms) throws Exception {
 		TermStats[] ts = new TermStats[terms.length]; // array for sorting
-		long totalTF = 0;
+		long totalTF;
 		for (int i = 0; i < terms.length; i++) {
-			try {
-				totalTF = getTotalTermFreq(reader, terms[i].term);
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			totalTF = getTotalTermFreq(reader, terms[i].term);
 			ts[i] = new TermStats(terms[i].term, terms[i].docFreq, totalTF);
 		}
 
@@ -445,21 +297,13 @@ public class HighFreqTerms {
 		return ts;
 	}
 	
-	public static long getTotalTermFreq(IndexReader reader, Term term) {
+	public static long getTotalTermFreq(IndexReader reader, Term term)
+			throws Exception {
 		long totalTF = 0;
-		TermDocs td;
-		try {
-			td = reader.termDocs(term);
-			if(td !=null){
-				while (td.next()) {
-					totalTF += td.freq();
-				}
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		TermDocs td = reader.termDocs(term);
+		while (td.next()) {
+			totalTF += td.freq();
 		}
-
 		return totalTF;
 	}
 }
@@ -480,54 +324,10 @@ final class TermStats {
 		this.totalTermFreq = tf;
 	}
 }
-/**
+
+*//**
  * Priority queue for TermStats objects ordered by TermStats.docFreq
- **/
-final class TermInfoEqualFreqThanX extends PriorityQueue {
-	int specificFreq;
-	TermInfoEqualFreqThanX(int size, int specificFreq) {
-		this.specificFreq = specificFreq;
-		initialize(size);
-	}
-
-	@Override
-	protected boolean lessThan(Object termInfoA, Object termInfoB) {
-		return ((TermStats) termInfoA).docFreq == specificFreq;
-	}
-}
-
-final class TermInfoHigherFreqThanX extends PriorityQueue {
-	int specificFreq;
-	TermInfoHigherFreqThanX(int size, int specificFreq) {
-		this.specificFreq = specificFreq;
-		initialize(size);
-	}
-
-	@Override
-	protected boolean lessThan(Object termInfoA, Object termInfoB) {
-		return ((TermStats) termInfoA).docFreq < specificFreq;
-	}
-}
-
-final class TermInfoLowerFreqThanX extends PriorityQueue {
-	int specificFreq;
-	TermInfoLowerFreqThanX(int size, int specificFreq) {
-		this.specificFreq = specificFreq;
-		initialize(size);
-	}
-
-	@Override
-	protected boolean lessThan(Object termInfoA, Object termInfoB) {
-	/*	if(((TermStats) termInfoA).docFreq == 1){
-			return true; //it should not be added to queue
-		}else{*/
-			return ((TermStats) termInfoA).docFreq > specificFreq;
-		//}
-	}
-}
-/**
- * Priority queue for TermStats objects ordered by TermStats.docFreq
- **/
+ **//*
 final class TermInfoWiTFQueueForHighFreq extends PriorityQueue {
 	TermInfoWiTFQueueForHighFreq(int size) {
 		initialize(size);
@@ -553,12 +353,12 @@ final class TermInfoWiTFQueueLowFreq extends PriorityQueue {
 		}
 	}
 }
-/**
+*//**
  * Comparator
  * 
  * Reverse of normal Comparator. i.e. returns 1 if a.totalTermFreq is less than
  * b.totalTermFreq So we can sort in descending order of totalTermFreq
- */
+ *//*
 final class TotalTermFreqComparatorSortDescending implements
 		Comparator<TermStats> {
 
@@ -584,4 +384,4 @@ if (a.totalTermFreq > b.totalTermFreq) {
 	return 0;
 }
 }
-}
+}*/

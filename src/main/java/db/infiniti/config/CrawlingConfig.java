@@ -45,6 +45,7 @@ public class CrawlingConfig {
 	// WebTools webTools;
 	ArrayList<WebsiteDS> listOfWebsites;
 	int queryIndex = 0;
+	int queryIndexInQueryList = 0;
 	THashSet<String> listOfStopWords;
 	Browser scrShots;
 	HashMap<Browser, Boolean> detailedPagesBrowsers = new HashMap<Browser, Boolean>();
@@ -88,6 +89,7 @@ public class CrawlingConfig {
 	public int leastFromLast = 4;
 	public int leastFreqFeedbackText = 5;
 	public int combinedLFL_PLW = 6;
+	public int correlationBased = 7;
 	public boolean feedbackBasedApproach = false;
 
 	public FeedbackBasedQueryGenerator fbBasedQueryGenerator;
@@ -122,8 +124,9 @@ public class CrawlingConfig {
 	
 	
 	public boolean isIndexed = false;
-	private IndexesConfig indexOld;
-	private IndexesConfig indexNew;
+	private IndexesConfigLowVersionLucene indexOld;
+	private IndexesConfigLowVersionLucene indexNew;
+	public ArrayList<String> listOfAllReturnedResults;
 	
 	
 	public boolean isHave_words_in_memory() {
@@ -163,12 +166,12 @@ public class CrawlingConfig {
 	public void setCache(String cachePath, boolean isIndexed) {
 		this.cache = new Cache();
 		if(!isIndexed){
-			cache.setCacheMapFilePath(cachePath);
+			cache.setCacheMapFilePath(cachePath+ "/cache/");
 			cache.prepareCacheReadWrite();
 			cache.readCacheMap();
 		}else if (isIndexed){
-			cache.setIndexNew();// = new IndexesConfig("newindex/pages");
-			cache.setIndexOld();// = new IndexesConfig("index/pages");
+			cache.setIndexNew(cachePath+ "/indexes/newindex/pages");// = new IndexesConfig("newindex/pages");
+			cache.setIndexOld(cachePath+ "/indexes/index/pages");// = new IndexesConfig("index/pages");
 
 		}
 	}
@@ -531,15 +534,23 @@ public class CrawlingConfig {
 				querySet.put(query.intern(), 0); // not to use later
 				firstQuery = false;
 			} else if (this.querySelectionApproach == this.leastFromLast) {
+				query=null;
+				if(listOfReturnedResultsPerQuery != null && listOfReturnedResultsPerQuery.size()>0){
 				query = fbBasedQueryGenerator
 						.setNextQueryLeastFromLast(initialQuery, this.isIndexed, listOfReturnedResultsPerQuery, this.cache);
+				}
+				int indexMinus = 2;
+				while(query==null && indexMinus<sentQueries.size()-1){
+					List<String> temp = queriesResults.get(sentQueries.get(sentQueries.size()-indexMinus));
+					indexMinus++;
+					query = fbBasedQueryGenerator
+							.setNextQueryLeastFromLast(initialQuery, this.isIndexed, temp, this.cache);
+				}
 				if (query != null) {
 					sentQueries.add(query.intern());
 					querySet.put(query.intern(), 0);
 					query = initialQueryProcesses + "+\"" + query + "\"";
-				} else {
-					return null;
-				}
+				} 
 			} else if (this.querySelectionApproach == this.mostFreqFeedbackText) {
 				query = fbBasedQueryGenerator.getMostFreqQuery(querySet,
 						initialQuery, this.isIndexed, this.cache);// .getLeastFreqQuery(querySet,
@@ -595,11 +606,11 @@ public class CrawlingConfig {
 				sentQueries.add(query.intern());
 				querySet.put(query.intern(), 0); // not to use later
 				firstQuery = false;
-			} else if (queryIndex < queries.size()) {
-				query = queries.get(queryIndex);
+			} else if (queryIndexInQueryList < queries.size()) {
+				query = queries.get(queryIndexInQueryList);
 				if (!currentSiteDescription.isAcceptsStopWords()) {
 					if (textEditor.isRefinedQueryStopWordLength(query)) {
-						queryIndex++;
+						queryIndexInQueryList++;
 						return setNextQuery();
 					}
 				} else {
@@ -609,6 +620,7 @@ public class CrawlingConfig {
 				sentQueries.add(query.intern());
 				querySet.put(query.intern(), 0); // not to use later
 				query = initialQueryProcesses + "+\"" + query + "\"";
+				queryIndexInQueryList++;
 			}
 		} else if (this.querySelectionApproach == this.browsing) {
 			if (url == null) {
@@ -643,6 +655,37 @@ public class CrawlingConfig {
 					return null;
 				}
 			}
+		}else if (this.querySelectionApproach == this.correlationBased) {
+			if (firstQuery) {// set first query
+				query = "";
+				for (String part : initialQuery) {
+					// initialQueryProcesses = initialQueryProcesses + "+\"" +
+					// part+ "\"";
+					initialQueryProcesses = initialQueryProcesses + "+\""
+							+ part + "\"";
+
+				}
+				initialQueryProcesses = initialQueryProcesses.replaceFirst(
+						"\\+", "");
+				query = initialQueryProcesses; // only for vitol website
+				sentQueries.add(query.intern());
+				// queryArray.add(query.intern(), 0); // not to use later
+				firstQuery = false;
+			} else {
+				int specificFreq = 0;
+				specificFreq = setSpecificFreq(listOfAllReturnedResults.size());
+				listOfAllReturnedResults.size();
+				query = fbBasedQueryGenerator.setNextQueryIn_Correlation(querySet, initialQuery, isIndexed, cache, specificFreq);
+				if (query != null) {
+					sentQueries.add(query.intern());
+					querySet.put(query.intern(), 0);
+					query = initialQueryProcesses + "+\"" + query + "\"";
+					//query = initialQueryProcesses + "+" + query + "";
+
+				} else {
+					return null;
+				}
+			}
 		}
 		String tempUrl = currentSiteDescription.getTemplate();
 		if (tempUrl.contains("{q}")) {
@@ -662,6 +705,17 @@ public class CrawlingConfig {
 		System.out.println("New query, number " + queryIndex + " : " + query);
 		queryIndex++;
 		return url;
+	}
+
+	private int setSpecificFreq(int size) {
+
+		int x = 3*size;
+		double y = (double)x/10000.0;
+		y = y*100;
+/*		while(y<1.0){
+			y = y*100;
+		}*/
+		return (int)y;
 	}
 
 	public String processInitiateQuery(){
