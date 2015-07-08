@@ -237,8 +237,9 @@ public class Browser {
 					driver.get(url);
 				} catch (UnreachableBrowserException e) {
 					System.out.println("UnreachableBrowserException " + url);
+				//	driver.close();
 					setDriver();
-					loadAndGetPageSource(url);
+					loadPage(url);
 				} catch (TimeoutException tmoutEx) {
 					// TODO check if it is stopped or we need to use
 					// window.stop();
@@ -276,7 +277,9 @@ public class Browser {
 						System.out
 								.println("UnreachableBrowserException + executeScript - getpageSource "
 										+ url);
+					//	driver.close();
 						setDriver();
+						loadPage(url);
 					} catch (TimeoutException tmoutEx) {
 						System.out
 								.println("TimeoutException in stop() - getpageSource "
@@ -299,9 +302,13 @@ public class Browser {
 			}
 			// close the page if even closing command takes longer than supposed
 			if (thStopGetPageSource.isAlive()) {
-				driver.close();
+				thStopGetPageSource.stop();
+		//		driver.close();
 				System.out.println("Browser is closed.");
 				this.setDriver();
+			}
+			if (t.isAlive()) {
+				t.stop();
 			}
 			totalStopTime = totalStopTime + System.currentTimeMillis() - time2;
 
@@ -476,6 +483,7 @@ public class Browser {
 		if(t.isAlive() && sourceText.equals("")){
 			System.out.println(url + " -> Could not extract text.");
 			sourceText = "";
+			t.stop();
 		}
 		pageText = sourceText;
 		sourceText = "";
@@ -555,6 +563,11 @@ public class Browser {
 						// sourceText = getPageSourceNew(url);
 						// view-source:
 						// sourceText = this.getPageSourceNew(url);
+					} catch (UnreachableBrowserException urEx) {
+						System.out.println("unreachable in source - close Driver "
+								+ url);
+						// ((JavascriptExecutor)
+						// driver).executeScript("return window.stop();");
 					} catch (TimeoutException tmoutEx) {
 						System.out.println("time out + getPageSource + new setDriver "
 								+ url);
@@ -599,6 +612,7 @@ public class Browser {
 						System.out
 								.println("UnreachableBrowserException + executeScript - getpageSource "
 										+ url);
+					//	driver.close();
 						setDriver();
 					} catch (TimeoutException tmoutEx) {
 						System.out
@@ -623,9 +637,12 @@ public class Browser {
 			// close the page if even closing command takes longer than supposed
 			if (thStopGetPageSource.isAlive()) {
 				thStopGetPageSource.stop();
-				driver.close();
+			//	driver.close();
 				System.out.println("Browser is closed.");
 				this.setDriver();
+			}
+			if (tGetPageSource.isAlive()) {
+				tGetPageSource.stop();
 			}
 		}
 		pageText = sourceText;
@@ -834,7 +851,7 @@ public class Browser {
 		}, xpathExpression);
 		t.start();
 		try {
-			t.join(timeOutThread);
+			t.join(timeOutThread*5);
 		} catch (InterruptedException e) { // ignore
 		}
 		if (t.isAlive()) { // Thread still alive, we need to abort

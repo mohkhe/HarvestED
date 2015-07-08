@@ -38,20 +38,26 @@ public class MainClass extends Thread {
 			dataModelTable = "dsItemsModelXPATH";
 			dataOutputTable = "dsItemsOutputMohtry";
 			numberOfSelectedSourceEngineIDtoCrawl = 21;// 0;
+			//27=phd comics
 			numberOfBrowsers = 3;
 		}
 
 		ArrayList<String> listOfReturnedResults = new ArrayList<String>();
 
-		String queryPoolPath = "querypool/words-6milion-freq";
-		String termFreqClueWebPath = "querypool/words-6milion-freq";// "querypool/wikiwebsorted";
+		String queryPoolPath = "querypool/vitol-sent-listofqueries";
+		String termFreqClueWebPath = "querypool/vitol-sent-listofqueries";
+		// "querypool/phdcomics-sent-listofqueries";
+		// "querypool/wikiwebsorted";
+		//"querypool/phdcomics-sent-listofqueries";
+		//"querypool/vitol-sent-listofqueries";
 		// "querypool/words-2000-3000-freq";
 		// "querypool/words-5000-freq";
+		// "querypool/words-4500-5000-freq";
+		// "querypool/words-15000-freq";
+		//"querypool/words-50000-freq"
 		// "querypool/words-300000-freq";
 		// "querypool/words-400000-freq";
 		// "querypool/words-500000-freq";
-		// "querypool/words-4500-5000-freq";
-		// "querypool/words-15000-freq";
 		//"querypool/words-1milion-freq"
 		//"querypool/words-6milion-freq"
 		// complete list in /media/DATA/pool/webwords/wikiwebsorted
@@ -79,15 +85,14 @@ public class MainClass extends Thread {
 		crawlingConfig.setOutputDataBase("mydatafactory");
 		crawlingConfig.setTableName(dataOutputTable);
 		// data output table name
-		crawlingConfig.setDataModelTable(dataModelTable);// "simpledatamodel");//dsItemsModelXPATH");//dsItemsModelXPATH
+		crawlingConfig.setDataModelTable(dataModelTable);// "simpledatamoPredefinedlistOfWordsdel");//dsItemsModelXPATH");//dsItemsModelXPATH
 		// data model table to extract detailed pages
 		crawlingConfig
-				.setQuerySelectionApproach(crawlingConfig.correlationBased);
+				.setQuerySelectionApproach(crawlingConfig.PredefinedlistOfWords);
 		// correlationBased - PredefinedlistOfWords - mostFreqFeedbackText - browsing -
 		// leastFromLast - leastFreqFeedbackText - combinedLFL_PLW
 		crawlingConfig.setQueries(queryPoolPath);
-		crawlingConfig.setInitialQuery(Arrays.asList("vitol"));//,"company")
-		// ));
+		crawlingConfig.setInitialQuery(Arrays.asList("vitol"));//,"company") //phd comics
 		//crawlingConfig.setInitialQuery(Arrays.asList("vitol"));
 		crawlingConfig.setIndexed(true);
 		crawlingConfig.setHave_words_in_memory(false);

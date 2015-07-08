@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 
 import net.htmlparser.jericho.Renderer;
 import net.htmlparser.jericho.Segment;
@@ -342,7 +343,7 @@ public class IndexesConfigLowVersionLucene {
 		return textFromHTMl;
 	}
 	
-	public String getMostFreqTermInIndex(int KIntopK, ArrayList<String> sentQueries){
+	public String getMostFreqTermInIndex(int KIntopK, ArrayList<String> sentQueries, List<String> initialQuery){
 		IndexReader indexReader = null;
 		try {
 			indexReader = IndexReader.open(indexDirectory);
@@ -355,7 +356,7 @@ public class IndexesConfigLowVersionLucene {
 		}
 		String mostFrerqTerm = "";
 		try {
-			mostFrerqTerm = freqTermsFinderInIndex.HighFreqTerms(indexDirectory, analyzer, indexReader, KIntopK, sentQueries);
+			mostFrerqTerm = freqTermsFinderInIndex.HighFreqTerms(indexDirectory, analyzer, indexReader, KIntopK, sentQueries, initialQuery);
 			indexReader.close();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -364,7 +365,7 @@ public class IndexesConfigLowVersionLucene {
 		return mostFrerqTerm;
 	}
 	
-	public String getSpecificFreqTermInIndex(int KIntopK, ArrayList<String> sentQueries, int specificFrec, boolean allranges){
+	public String getSpecificFreqTermInIndex(int KIntopK, ArrayList<String> sentQueries, int specificFrec, boolean allranges, boolean versionOld){
 		IndexReader indexReader = null;
 		try {
 			indexReader = IndexReader.open(indexDirectory);
@@ -377,7 +378,7 @@ public class IndexesConfigLowVersionLucene {
 		}
 		String mostFrerqTerm = "";
 		try {
-			mostFrerqTerm = freqTermsFinderInIndex.SpecificFreqTerms(indexDirectory, analyzer, indexReader, KIntopK, sentQueries,specificFrec, allranges);
+			mostFrerqTerm = freqTermsFinderInIndex.SpecificFreqTerms(indexDirectory, analyzer, indexReader, KIntopK, sentQueries,specificFrec, allranges, versionOld);
 			indexReader.close();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block

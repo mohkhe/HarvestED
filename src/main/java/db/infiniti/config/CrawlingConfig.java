@@ -595,6 +595,7 @@ public class CrawlingConfig {
 			 */
 		} else if (this.querySelectionApproach == this.PredefinedlistOfWords) {
 			if (firstQuery) {// set first query
+				refineListOfWords(this.termFreqInClueWeb);
 				query = "";
 				for (String part : initialQuery) {
 					initialQueryProcesses = initialQueryProcesses + "+\""
@@ -628,6 +629,7 @@ public class CrawlingConfig {
 			}
 		} else if (this.querySelectionApproach == combinedLFL_PLW) {
 			if (firstQuery) {// set first query
+				refineListOfWords(this.termFreqInClueWeb);
 				query = "";
 				for (String part : initialQuery) {
 					// initialQueryProcesses = initialQueryProcesses + "+\"" +
@@ -672,10 +674,11 @@ public class CrawlingConfig {
 				// queryArray.add(query.intern(), 0); // not to use later
 				firstQuery = false;
 			} else {
+				boolean versionOld = true; // if true -> version0-versionOld
 				int specificFreq = 0;
 				specificFreq = setSpecificFreq(listOfAllReturnedResults.size());
 				listOfAllReturnedResults.size();
-				query = fbBasedQueryGenerator.setNextQueryIn_Correlation(querySet, initialQuery, isIndexed, cache, specificFreq);
+				query = fbBasedQueryGenerator.setNextQueryIn_Correlation(querySet, initialQuery, isIndexed, cache, specificFreq, versionOld);
 				if (query != null) {
 					sentQueries.add(query.intern());
 					querySet.put(query.intern(), 0);
@@ -705,6 +708,17 @@ public class CrawlingConfig {
 		System.out.println("New query, number " + queryIndex + " : " + query);
 		queryIndex++;
 		return url;
+	}
+
+	private void refineListOfWords(HashMap<String, Integer> termFreqInClueWeb2) {
+		Iterator<String> termInClueWeb = termFreqInClueWeb2.keySet().iterator();
+		// TODO check if this is the most frequent and not the least frequent
+		while (termInClueWeb.hasNext()) {
+			String term = termInClueWeb.next();
+			if (this.textEditor.isRefinedQueryStopWordLength(term)) {
+				termInClueWeb.remove();
+			}
+		}		
 	}
 
 	private int setSpecificFreq(int size) {

@@ -234,6 +234,8 @@ public class CrawlerSellenium {
 
 				if (crawlingConfig.isExtractTextFromSRPages()) {
 					pageSource = sRPagesbrowser.loadAndGetPageSource(url);
+					saveRetunredResultPage(pageSource, noOfReturnedResultsPages);
+
 				} else if (!url.equalsIgnoreCase("javascript clicked.")) {
 					// it is already set and clicked. no need to load
 					// sRPagesbrowser.loadPage(url);
@@ -248,9 +250,6 @@ public class CrawlerSellenium {
 				crawlingConfig.saveCrawledSRPageStatus(
 						crawlReport.getCountCrawlingQueries(),
 						crawlingConfig.pathToNumberOfSentQueries);
-				if (crawlingConfig.isExtractTextFromSRPages()) {
-					saveRetunredResultPage(pageSource, noOfReturnedResultsPages);
-				}
 				crawlingConfig
 						.setSearchResultPageNumber(noOfReturnedResultsPages);
 
@@ -496,6 +495,10 @@ public class CrawlerSellenium {
 						// Handle exception
 					}
 				}
+				if(numberOfProcessedLinks == numberOfDocInReturnedResults){
+					stopCrawlForQuery = true;
+				}
+				
 				crawlingConfig.waitTillAllBrowsersAreFree();
 				if (posedQueiesIndex > 650) {
 					continueCrawl = false;
@@ -1310,6 +1313,8 @@ public class CrawlerSellenium {
 
 		} catch (org.openqa.selenium.remote.UnreachableBrowserException ee) {
 
+		}catch(Exception e){
+			System.out.println("Error in extracting results links.");
 		}
 
 		if (links == null) {

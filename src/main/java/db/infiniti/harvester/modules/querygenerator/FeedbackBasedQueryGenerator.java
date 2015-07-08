@@ -210,7 +210,7 @@ public class FeedbackBasedQueryGenerator {
 		return query;
 	}
 	public String setNextQueryIn_Correlation(TObjectIntHashMap<String> querySet,
-			List<String> initialQuery, boolean isIndexed, Cache cache, int specificFreq) {
+			List<String> initialQuery, boolean isIndexed, Cache cache, int specificFreq, boolean versionOld) {
 		if (!isIndexed) {
 			List<String> mapKeys = new ArrayList<String>(querySet.keySet());
 			// List<Integer> mapValues = new
@@ -249,14 +249,16 @@ public class FeedbackBasedQueryGenerator {
 				}
 			}
 		} else {
+	
 			String specificFreqQuery = cache.indexNew.getSpecificFreqTermInIndex(10,
-					sentQueries, specificFreq, false);
+					sentQueries, specificFreq, false, versionOld); // versionOld  
 			sentQueries.add(specificFreqQuery);
 			sentQueries.trimToSize();
 			return specificFreqQuery;
 		}
 		return null;
 	}
+	//TODO performance can be improved. remove sent from list of words
 	public String setNextQueryIn_Feedback_ClueWeb(List<String> initialQuery,
 			Set<String> queryArray,
 			HashMap<String, Integer> termFreqInClueWeb2, boolean isIndexed,
@@ -348,7 +350,7 @@ public class FeedbackBasedQueryGenerator {
 			}
 		} else {
 			String mostFreqQuery = cache.indexNew.getMostFreqTermInIndex(10,
-					sentQueries);
+					sentQueries, initialQuery);
 			sentQueries.add(mostFreqQuery);
 			sentQueries.trimToSize();
 			return mostFreqQuery;

@@ -355,7 +355,7 @@ public class IndexesConfig {
 		}
 		String mostFrerqTerm = "";
 		try {
-			mostFrerqTerm = freqTermsFinderInIndex.HighFreqTerms(indexDirectory, analyzer, indexReader, KIntopK, sentQueries);
+		//	mostFrerqTerm = freqTermsFinderInIndex.HighFreqTerms(indexDirectory, analyzer, indexReader, KIntopK, sentQueries, initialQuery);
 			indexReader.close();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -387,7 +387,7 @@ public class IndexesConfig {
 	}
 
 	public String getSpecificFreqTermInIndex(int KIntopK,
-			ArrayList<String> sentQueries, int specificFreq, boolean allranges) {
+			ArrayList<String> sentQueries, int specificFreq, boolean allranges, boolean versionOld) {
 		IndexReader indexReader = null;
 		try {
 			indexReader = IndexReader.open(indexDirectory);
@@ -400,7 +400,7 @@ public class IndexesConfig {
 		}
 		String specificFrerqTerm = "";
 		try {
-			specificFrerqTerm = freqTermsFinderInIndex.SpecificFreqTerms(indexDirectory, analyzer, indexReader, KIntopK, sentQueries, specificFreq, allranges);
+			specificFrerqTerm = freqTermsFinderInIndex.SpecificFreqTerms(indexDirectory, analyzer, indexReader, KIntopK, sentQueries, specificFreq, allranges, versionOld);
 			indexReader.close();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
