@@ -1,0 +1,242 @@
+<?xml version="1.0"?>
+<RDF:RDF xmlns:NC="http://home.netscape.com/NC-rdf#"
+         xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+  <RDF:Description RDF:about="urn:mimetype:handler:video/ogg"
+                   NC:saveToDisk="true"
+                   NC:alwaysAsk="false" />
+  <RDF:Description RDF:about="urn:mimetype:audio/ogg"
+                   NC:value="audio/ogg">
+    <NC:handlerProp RDF:resource="urn:mimetype:handler:audio/ogg"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:mimetype:handler:video/x-ms-wm"
+                   NC:saveToDisk="true"
+                   NC:alwaysAsk="false" />
+  <RDF:Description RDF:about="urn:scheme:mailto"
+                   NC:value="mailto">
+    <NC:handlerProp RDF:resource="urn:scheme:handler:mailto"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:scheme:irc"
+                   NC:value="irc">
+    <NC:handlerProp RDF:resource="urn:scheme:handler:irc"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:mimetype:video/quicktime"
+                   NC:value="video/quicktime">
+    <NC:handlerProp RDF:resource="urn:mimetype:handler:video/quicktime"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:mimetype:handler:video/x-ms-wmv"
+                   NC:saveToDisk="true"
+                   NC:alwaysAsk="false" />
+  <RDF:Description RDF:about="urn:mimetype:audio/midi"
+                   NC:value="audio/midi">
+    <NC:handlerProp RDF:resource="urn:mimetype:handler:audio/midi"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:mimetype:handler:video/x-ms-wvx"
+                   NC:saveToDisk="true"
+                   NC:alwaysAsk="false" />
+  <RDF:Description RDF:about="urn:mimetype:handler:video/x-msvideo"
+                   NC:saveToDisk="true"
+                   NC:alwaysAsk="false" />
+  <RDF:Description RDF:about="urn:mimetype:video/webm"
+                   NC:value="video/webm">
+    <NC:handlerProp RDF:resource="urn:mimetype:handler:video/webm"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:mimetype:application/pdf"
+                   NC:value="application/pdf">
+    <NC:handlerProp RDF:resource="urn:mimetype:handler:application/pdf"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:handler:web:https://30boxes.com/external/widget?refer=ff&amp;url=%s"
+                   NC:prettyName="30 Boxes"
+                   NC:uriTemplate="https://30boxes.com/external/widget?refer=ff&amp;url=%s" />
+  <RDF:Description RDF:about="urn:scheme:ircs"
+                   NC:value="ircs">
+    <NC:handlerProp RDF:resource="urn:scheme:handler:ircs"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:mimetype:handler:video/quicktime"
+                   NC:saveToDisk="true"
+                   NC:alwaysAsk="false" />
+  <RDF:Description RDF:about="urn:mimetype:handler:application/x-shockwave-flash"
+                   NC:saveToDisk="true"
+                   NC:alwaysAsk="false" />
+  <RDF:Description RDF:about="urn:mimetype:handler:audio/x-wav"
+                   NC:saveToDisk="true"
+                   NC:alwaysAsk="false" />
+  <RDF:Description RDF:about="urn:mimetype:video/x-ms-wvx"
+                   NC:value="video/x-ms-wvx">
+    <NC:handlerProp RDF:resource="urn:mimetype:handler:video/x-ms-wvx"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:mimetype:audio/x-ms-wma"
+                   NC:value="audio/x-ms-wma">
+    <NC:handlerProp RDF:resource="urn:mimetype:handler:audio/x-ms-wma"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:mimetype:handler:video/mpeg"
+                   NC:saveToDisk="true"
+                   NC:alwaysAsk="false" />
+  <RDF:Seq RDF:about="urn:mimetypes:root">
+    <RDF:li RDF:resource="urn:mimetype:application/pdf"/>
+    <RDF:li RDF:resource="urn:mimetype:video/x-ms-wvx"/>
+    <RDF:li RDF:resource="urn:mimetype:video/x-ms-wm"/>
+    <RDF:li RDF:resource="urn:mimetype:video/x-ms-wmv"/>
+    <RDF:li RDF:resource="urn:mimetype:audio/x-ms-wma"/>
+    <RDF:li RDF:resource="urn:mimetype:video/webm"/>
+    <RDF:li RDF:resource="urn:mimetype:audio/x-wav"/>
+    <RDF:li RDF:resource="urn:mimetype:application/x-shockwave-flash"/>
+    <RDF:li RDF:resource="urn:mimetype:application/futuresplash"/>
+    <RDF:li RDF:resource="urn:mimetype:video/quicktime"/>
+    <RDF:li RDF:resource="urn:mimetype:video/ogg"/>
+    <RDF:li RDF:resource="urn:mimetype:application/ogg"/>
+    <RDF:li RDF:resource="urn:mimetype:audio/ogg"/>
+    <RDF:li RDF:resource="urn:mimetype:video/mpeg"/>
+    <RDF:li RDF:resource="urn:mimetype:video/mp4"/>
+    <RDF:li RDF:resource="urn:mimetype:audio/mpeg"/>
+    <RDF:li RDF:resource="urn:mimetype:audio/midi"/>
+    <RDF:li RDF:resource="urn:mimetype:video/annodex"/>
+    <RDF:li RDF:resource="urn:mimetype:audio/annodex"/>
+    <RDF:li RDF:resource="urn:mimetype:video/x-msvideo"/>
+    <RDF:li RDF:resource="urn:mimetype:video/x-ms-asf"/>
+    <RDF:li RDF:resource="urn:mimetype:application/annodex"/>
+  </RDF:Seq>
+  <RDF:Description RDF:about="urn:mimetype:application/annodex"
+                   NC:value="application/annodex">
+    <NC:handlerProp RDF:resource="urn:mimetype:handler:application/annodex"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:mimetype:video/x-ms-asf"
+                   NC:value="video/x-ms-asf">
+    <NC:handlerProp RDF:resource="urn:mimetype:handler:video/x-ms-asf"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:mimetype:video/ogg"
+                   NC:value="video/ogg">
+    <NC:handlerProp RDF:resource="urn:mimetype:handler:video/ogg"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:scheme:webcal"
+                   NC:value="webcal">
+    <NC:handlerProp RDF:resource="urn:scheme:handler:webcal"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:mimetype:handler:audio/annodex"
+                   NC:saveToDisk="true"
+                   NC:alwaysAsk="false" />
+  <RDF:Description RDF:about="urn:scheme:handler:mailto"
+                   NC:useSystemDefault="true"
+                   NC:alwaysAsk="false">
+    <NC:possibleApplication RDF:resource="urn:handler:web:https://compose.mail.yahoo.com/?To=%s"/>
+    <NC:possibleApplication RDF:resource="urn:handler:web:https://mail.google.com/mail/?extsrc=mailto&amp;url=%s"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:mimetypes">
+    <NC:MIME-types RDF:resource="urn:mimetypes:root"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:scheme:handler:ircs"
+                   NC:alwaysAsk="true">
+    <NC:possibleApplication RDF:resource="urn:handler:web:https://www.mibbit.com/?url=%s"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:mimetype:handler:video/annodex"
+                   NC:saveToDisk="true"
+                   NC:alwaysAsk="false" />
+  <RDF:Description RDF:about="urn:mimetype:handler:audio/midi"
+                   NC:saveToDisk="true"
+                   NC:alwaysAsk="false" />
+  <RDF:Description RDF:about="urn:mimetype:video/x-ms-wmv"
+                   NC:value="video/x-ms-wmv">
+    <NC:handlerProp RDF:resource="urn:mimetype:handler:video/x-ms-wmv"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:mimetype:video/x-ms-wm"
+                   NC:value="video/x-ms-wm">
+    <NC:handlerProp RDF:resource="urn:mimetype:handler:video/x-ms-wm"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:mimetype:video/x-msvideo"
+                   NC:value="video/x-msvideo">
+    <NC:handlerProp RDF:resource="urn:mimetype:handler:video/x-msvideo"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:mimetype:video/mp4"
+                   NC:value="video/mp4">
+    <NC:handlerProp RDF:resource="urn:mimetype:handler:video/mp4"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:mimetype:handler:application/futuresplash"
+                   NC:saveToDisk="true"
+                   NC:alwaysAsk="false" />
+  <RDF:Description RDF:about="urn:mimetype:audio/annodex"
+                   NC:value="audio/annodex">
+    <NC:handlerProp RDF:resource="urn:mimetype:handler:audio/annodex"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:mimetype:application/ogg"
+                   NC:value="application/ogg">
+    <NC:handlerProp RDF:resource="urn:mimetype:handler:application/ogg"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:handler:web:https://compose.mail.yahoo.com/?To=%s"
+                   NC:prettyName="Yahoo! Mail"
+                   NC:uriTemplate="https://compose.mail.yahoo.com/?To=%s" />
+  <RDF:Description RDF:about="urn:scheme:handler:webcal"
+                   NC:alwaysAsk="true">
+    <NC:possibleApplication RDF:resource="urn:handler:web:https://30boxes.com/external/widget?refer=ff&amp;url=%s"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:mimetype:handler:audio/ogg"
+                   NC:saveToDisk="true"
+                   NC:alwaysAsk="false" />
+  <RDF:Description RDF:about="urn:mimetype:audio/x-wav"
+                   NC:value="audio/x-wav">
+    <NC:handlerProp RDF:resource="urn:mimetype:handler:audio/x-wav"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:handler:web:https://mail.google.com/mail/?extsrc=mailto&amp;url=%s"
+                   NC:prettyName="Gmail"
+                   NC:uriTemplate="https://mail.google.com/mail/?extsrc=mailto&amp;url=%s" />
+  <RDF:Description RDF:about="urn:mimetype:handler:audio/mpeg"
+                   NC:saveToDisk="true"
+                   NC:alwaysAsk="false" />
+  <RDF:Description RDF:about="urn:mimetype:handler:application/ogg"
+                   NC:saveToDisk="true"
+                   NC:alwaysAsk="false" />
+  <RDF:Description RDF:about="urn:handler:web:https://www.mibbit.com/?url=%s"
+                   NC:prettyName="Mibbit"
+                   NC:uriTemplate="https://www.mibbit.com/?url=%s" />
+  <RDF:Description RDF:about="urn:mimetype:video/mpeg"
+                   NC:value="video/mpeg">
+    <NC:handlerProp RDF:resource="urn:mimetype:handler:video/mpeg"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:mimetype:handler:application/pdf"
+                   NC:saveToDisk="true"
+                   NC:alwaysAsk="false" />
+  <RDF:Description RDF:about="urn:mimetype:audio/mpeg"
+                   NC:value="audio/mpeg">
+    <NC:handlerProp RDF:resource="urn:mimetype:handler:audio/mpeg"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:mimetype:handler:video/x-ms-asf"
+                   NC:saveToDisk="true"
+                   NC:alwaysAsk="false" />
+  <RDF:Description RDF:about="urn:mimetype:handler:video/mp4"
+                   NC:saveToDisk="true"
+                   NC:alwaysAsk="false" />
+  <RDF:Description RDF:about="urn:mimetype:application/x-shockwave-flash"
+                   NC:value="application/x-shockwave-flash">
+    <NC:handlerProp RDF:resource="urn:mimetype:handler:application/x-shockwave-flash"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:scheme:handler:irc"
+                   NC:alwaysAsk="true">
+    <NC:possibleApplication RDF:resource="urn:handler:web:https://www.mibbit.com/?url=%s"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:mimetype:handler:application/annodex"
+                   NC:saveToDisk="true"
+                   NC:alwaysAsk="false" />
+  <RDF:Description RDF:about="urn:mimetype:video/annodex"
+                   NC:value="video/annodex">
+    <NC:handlerProp RDF:resource="urn:mimetype:handler:video/annodex"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:root"
+                   NC:en-US_defaultHandlersVersion="4" />
+  <RDF:Seq RDF:about="urn:schemes:root">
+    <RDF:li RDF:resource="urn:scheme:webcal"/>
+    <RDF:li RDF:resource="urn:scheme:ircs"/>
+    <RDF:li RDF:resource="urn:scheme:mailto"/>
+    <RDF:li RDF:resource="urn:scheme:irc"/>
+  </RDF:Seq>
+  <RDF:Description RDF:about="urn:mimetype:handler:audio/x-ms-wma"
+                   NC:saveToDisk="true"
+                   NC:alwaysAsk="false" />
+  <RDF:Description RDF:about="urn:mimetype:application/futuresplash"
+                   NC:value="application/futuresplash">
+    <NC:handlerProp RDF:resource="urn:mimetype:handler:application/futuresplash"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="urn:mimetype:handler:video/webm"
+                   NC:saveToDisk="true"
+                   NC:alwaysAsk="false" />
+  <RDF:Description RDF:about="urn:schemes">
+    <NC:Protocol-Schemes RDF:resource="urn:schemes:root"/>
+  </RDF:Description>
+</RDF:RDF>
